@@ -1,6 +1,6 @@
 # MOCK-ONLY hosted build of personal-agent-demo for the SE cluster (rule 18). Same image as the standalone, MODE=mock,
 # PAGENT_HOSTED=1 (the banner then says HOSTED SIMULATION). No secrets, no tenant ids, no volumes with data.
-# Placeholders in ${...} are filled by k8s/deploy.sh; nothing here names a real host or registry path.
+# Placeholders (__IMAGE__, __SE_HOST__, __INGRESS_CLASS__, __CLUSTER_ISSUER__) are filled by k8s/deploy.sh; nothing here names a real host or registry path.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,14 +22,14 @@ spec:
         seccompProfile: { type: RuntimeDefault }
       containers:
         - name: app
-          image: ${IMAGE}
+          image: __IMAGE__
           imagePullPolicy: IfNotPresent
           ports:
             - { name: http, containerPort: 6900 }
           env:
             - { name: MODE, value: mock }
             - { name: PAGENT_HOSTED, value: "1" }
-            - { name: PAGENT_PUBLIC_HOST, value: ${SE_HOST} }
+            - { name: PAGENT_PUBLIC_HOST, value: __SE_HOST__ }
             - { name: PORT, value: "6900" }
             - { name: PAGENT_BIND, value: 0.0.0.0 }
           readinessProbe:

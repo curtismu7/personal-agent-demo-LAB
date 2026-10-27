@@ -7,7 +7,7 @@ metadata:
 spec:
   secretName: personal-agent-demo-tls
   dnsNames:
-    - ${SE_HOST}
+    - __SE_HOST__
   issuerRef:
     kind: ClusterIssuer
-    name: ${CLUSTER_ISSUER}
+    name: __CLUSTER_ISSUER__

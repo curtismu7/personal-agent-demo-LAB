@@ -14,12 +14,12 @@ metadata:
     nginx.ingress.kubernetes.io/limit-connections: "30"
     nginx.ingress.kubernetes.io/proxy-body-size: "16k"
 spec:
-  ingressClassName: ${INGRESS_CLASS}
+  ingressClassName: __INGRESS_CLASS__
   tls:
-    - hosts: [${SE_HOST}]
+    - hosts: [__SE_HOST__]
       secretName: personal-agent-demo-tls
   rules:
-    - host: ${SE_HOST}
+    - host: __SE_HOST__
       http:
         paths:
           - { path: /, pathType: Prefix, backend: { service: { name: personal-agent-demo, port: { name: http } } } }
