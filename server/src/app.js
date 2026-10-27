@@ -8,7 +8,7 @@ import { hostCheck, sameOriginWrites } from './safety.js';
 import { createHealth } from './health.js';
 import { buildFlow, loadCast } from './flow.js';
 import { hostedFrom, modeFrom } from './config.js';
-import { PATTERN } from './patternData.js';
+import { PATHS, buildPattern } from './patternData.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIST = process.env.WEB_DIST || path.resolve(HERE, '../../web/dist');
@@ -26,7 +26,7 @@ export function createApp({ health = createHealth(), configFile = CONFIG, hosted
   api.use('/health', health.router);
   // Read on every request so editing customer.config.json shows up on reload.
   api.get('/flow', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ ...buildFlow(loadCast(configFile)), hosted }); });
-  api.get('/pattern', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json(PATTERN); });
+  api.get('/pattern', (req, res) => { res.set('Cache-Control', 'no-store'); const id = PATHS.some((p) => p.id === req.query.path) ? req.query.path : 'privilege'; res.json(buildPattern(id)); });
   // What this build is, for the banner and for verifying a deploy by content (not by a 200).
   api.get('/info', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ mode: modeFrom(), simulated: true, hosted }); });
   // Reset: the walkthrough lives in the browser, so this only confirms. Kept so `npm run reset` and the shelf behave like the other demos.

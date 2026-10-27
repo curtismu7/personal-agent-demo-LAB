@@ -26,11 +26,12 @@ export default function App() {
     return () => { live = false; };
   }, []);
 
+  const [patternPath, setPatternPath] = useState("privilege");
   useEffect(() => {
     let live = true;
-    fetch("/api/pattern").then((r) => (r.ok ? r.json() : null)).then((j) => live && j && setPattern(j), () => {});
+    fetch(`/api/pattern?path=${patternPath}`).then((r) => (r.ok ? r.json() : null)).then((j) => live && j && setPattern(j), () => {});
     return () => { live = false; };
-  }, []);
+  }, [patternPath]);
 
   // A Learning Hub card opens a hop with /#hop-3.
   const goToHash = stepper.goTo;
@@ -91,7 +92,7 @@ export default function App() {
           <button type="button" aria-pressed={view === "steps"} onClick={() => setView("steps")}>12 steps</button>
         </nav>
       )}
-      {view === "pattern" && pattern ? <PatternDiagram pattern={pattern} /> : <>
+      {view === "pattern" && pattern ? <PatternDiagram key={patternPath} pattern={pattern} path={patternPath} onPath={setPatternPath} /> : <>
       <section className="track" aria-label="Talk track">
         {hop ? (
           <article className="track__now" data-testid="track-now">

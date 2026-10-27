@@ -2,35 +2,47 @@
 // Static, mock only. Hosts are .example. Each step is one arrow, walked in order by Simulate.
 const json = (obj) => JSON.stringify(obj, null, 2);
 
-export const NODES = [
-  { id: 'user', label: 'User', kind: 'actor', x: 0, y: 330 },
-  { id: 'agent', label: 'Personal Agent', kind: 'actor', x: 200, y: 330 },
-  { id: 'llm', label: 'LLM', kind: 'resource', x: 200, y: 520 },
-  { id: 'gateway', label: 'PingOne Privilege AI Gateway (MCP)', kind: 'gateway', x: 470, y: 330 },
-  { id: 'mcp', label: 'MCP', kind: 'actor', x: 740, y: 330 },
-  { id: 'apigw', label: 'API GW', kind: 'actor', x: 940, y: 330 },
-  { id: 'resource', label: 'Resource', kind: 'resource', x: 1140, y: 330 },
-  { id: 'iam', label: 'Agent IAM Core', kind: 'lane-iam', x: 170, y: 20 },
-  { id: 'priv', label: 'Agent Privilege', kind: 'lane-priv', x: 560, y: 20 },
-  { id: 'authz', label: 'Agent Authorize', kind: 'lane-authz', x: 950, y: 20 },
+const node = (id, label, kind, x, y) => ({ id, label, kind, x, y });
+const common = (gatewayLabel) => [
+  node('user', 'User', 'actor', 0, 330), node('agent', 'Personal Agent', 'actor', 200, 330), node('llm', 'LLM', 'resource', 200, 520),
+  node('gateway', gatewayLabel, 'gateway', 470, 330), node('mcp', 'MCP', 'actor', 740, 330), node('apigw', 'API GW', 'actor', 940, 330),
+  node('resource', 'Resource', 'resource', 1140, 330),
+  node('iam', 'Agent IAM Core', 'lane-iam', 40, 20), node('authz', 'Agent Authorize', 'lane-authz', 900, 20),
 ];
-
-export const STEPS = [
-  { from: 'user', to: 'agent', label: 'asks', say: 'The user asks their personal agent for something. The agent is theirs; it acts for one person.', payload: null },
-  { from: 'agent', to: 'llm', label: 'prompt', say: 'The agent uses a language model to decide which tool to call. The model never holds a credential.', payload: null },
-  { from: 'agent', to: 'iam', label: 'User authenticates', say: 'The user signs in through Agent IAM Core. The agent receives a token whose audience is the AI gateway and whose subject is the user.', payload: json({ aud: 'https://aigateway.example', sub: 'user' }) },
-  { from: 'agent', to: 'gateway', label: 'MCP / OIDC', say: 'The agent calls the gateway over MCP, presenting that token.', payload: null },
-  { from: 'gateway', to: 'iam', label: 'Token exchange (optional)', say: 'Optional, and it depends on what the MCP server supports: the gateway swaps the token for an on-behalf-of token for the MCP server, same subject, new audience.', payload: json({ aud: 'https://mcpserver.example', sub: 'user' }) },
-  { from: 'gateway', to: 'priv', label: 'Coarse to medium grained', say: 'Agent Privilege applies tool-level authorization: may this user, through this agent, call this tool at all?', payload: null },
-  { from: 'gateway', to: 'mcp', label: 'MCP', say: 'The gateway calls the MCP server using whichever credential that server needs: OIDC, a static token or an API key.', payload: null },
-  { from: 'mcp', to: 'apigw', label: 'API call', say: 'The MCP server calls the backend through the API gateway.', payload: null },
-  { from: 'apigw', to: 'authz', label: 'Fine grained', say: 'Agent Authorize applies finer-grained, business-level rules to the specific request and data.', payload: null },
-  { from: 'apigw', to: 'resource', label: 'allowed call', say: 'Only a request that passed both layers reaches the resource.', payload: null },
+const step = (from, to, label, say, payload = null) => ({ from, to, label, say, payload });
+const front = [
+  step('user', 'agent', 'asks', 'The user asks their personal agent for something. The agent is theirs; it acts for one person.'),
+  step('agent', 'llm', 'prompt', 'The agent uses a language model to decide which tool to call. The model never holds a credential.'),
+  step('agent', 'iam', 'User authenticates', 'The user signs in through Agent IAM Core. The agent receives a token whose audience is the MCP gateway and whose subject is the user.', json({ aud: 'https://aigateway.example', sub: 'user' })),
 ];
+const back = [
+  step('mcp', 'apigw', 'API call', 'The MCP server calls the backend through the API gateway.'),
+  step('apigw', 'authz', 'Fine grained', 'Agent Authorize applies finer-grained, business-level rules to this request and data.'),
+  step('apigw', 'resource', 'allowed call', 'Only a request that passed both layers reaches the resource.'),
+];
+const OBO = json({ aud: 'https://mcpserver.example', sub: 'user' });
 
-export const PATTERN = {
-  title: 'Personal Agent Pattern',
-  intro: 'One person, one agent. The Ping Agentic Control Plane decides at three points: who the user is (Agent IAM Core), which tools the agent may use (Agent Privilege) and what the business rules allow (Agent Authorize).',
-  nodes: NODES,
-  steps: STEPS,
-};
+export const PATHS = [{ id: 'privilege', label: 'Agent Privilege' }, { id: 'ig', label: 'Agent Gateway (IG)' }];
+
+export function buildPattern(path = 'privilege') {
+  if (path === 'ig') {
+    return {
+      title: 'Personal Agent Pattern: Agent Gateway (IG) path',
+      intro: 'The same pattern with Agent Gateway (IG) as the MCP gateway. On this path the token exchange (OBO) is shown as available, through Agent IAM Core. UNVERIFIED: what IG enforces at each step has not been confirmed, so only the OBO difference is drawn.',
+      paths: PATHS, nodes: common('Agent Gateway (IG)'),
+      steps: [...front,
+        step('agent', 'gateway', 'MCP / OIDC', 'The agent calls Agent Gateway (IG) over MCP with that token.'),
+        step('gateway', 'iam', 'Token exchange (OBO)', 'Agent Gateway (IG) swaps the token through Agent IAM Core for an on-behalf-of token for the MCP server, same subject. It depends on MCP support.', OBO),
+        step('gateway', 'mcp', 'MCP', 'Agent Gateway (IG) calls the MCP server with the exchanged token.'), ...back],
+    };
+  }
+  return {
+    title: 'Personal Agent Pattern: Agent Privilege path',
+    intro: 'One person, one agent. The Ping Agentic Control Plane decides at three points: who the user is (Agent IAM Core), which tools the agent may use (Agent Privilege, which is also the MCP front door) and what the business rules allow (Agent Authorize).',
+    paths: PATHS, nodes: common('Agent Privilege'),
+    steps: [...front,
+      step('agent', 'gateway', 'MCP / OIDC, tool check', 'The agent calls Agent Privilege over MCP with that token. Agent Privilege applies tool-level (coarse to medium grained) authorization: may this user, through this agent, call this tool at all?'),
+      step('gateway', 'iam', 'OBO (coming soon)', 'Not available yet. When it is, Agent Privilege will swap the token for an on-behalf-of token for the MCP server (same subject), and it depends on MCP support. Until then the next call uses the credential the MCP server accepts.'),
+      step('gateway', 'mcp', 'MCP', 'Agent Privilege uses the credential that server needs: OIDC, a static token or an API key.'), ...back],
+  };
+}

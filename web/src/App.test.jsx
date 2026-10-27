@@ -99,11 +99,13 @@ describe("App", () => {
 
 describe("pattern view", () => {
   it("shows the Pattern tab, walks a step and Reset clears it", async () => {
-    const pattern = { title: "P", intro: "pattern intro", nodes: [{ id: "a", label: "A", kind: "actor", x: 0, y: 0 }, { id: "b", label: "B", kind: "actor", x: 200, y: 0 }], steps: [{ from: "a", to: "b", label: "go", say: "say go", payload: '{"aud":"x"}' }] };
-    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => ({ ok: true, json: async () => (String(url).endsWith("/api/pattern") ? pattern : String(url).endsWith("/api/flow") ? FLOW : { reset: "ok" }) }));
+    const pattern = { title: "P", intro: "pattern intro", nodes: [{ id: "a", label: "A", kind: "actor", x: 0, y: 0 }, { id: "b", label: "B", kind: "actor", x: 200, y: 0 }], steps: [{ from: "a", to: "b", label: "go", say: "say go", payload: '{"aud":"x"}' }], paths: [{ id: "privilege", label: "Agent Privilege" }, { id: "ig", label: "Agent Gateway (IG)" }] };
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => ({ ok: true, json: async () => (String(url).includes("/api/pattern") ? pattern : String(url).endsWith("/api/flow") ? FLOW : { reset: "ok" }) }));
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Pattern" }));
     expect(screen.getByText("pattern intro")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Agent Gateway (IG)" }));
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith("/api/pattern?path=ig"));
     fireEvent.click(screen.getByRole("button", { name: /simulate/i }));
     expect((await screen.findByTestId("pattern-now")).textContent).toMatch(/say go/);
     expect(screen.getByTestId("pattern-json").textContent).toMatch(/aud/);

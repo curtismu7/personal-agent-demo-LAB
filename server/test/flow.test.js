@@ -89,12 +89,17 @@ test('the host is lower-cased, and an invalid one falls back to the default', ()
   assert.equal(loadCast(file).host, DEFAULT_CAST.host);
 });
 
-test('the pattern diagram: every step joins two known nodes, and no host or key is real', async () => {
-  const { PATTERN } = await import('../src/patternData.js');
-  const ids = new Set(PATTERN.nodes.map((n) => n.id));
-  assert.equal(ids.size, PATTERN.nodes.length);
-  for (const s of PATTERN.steps) { assert.ok(ids.has(s.from) && ids.has(s.to), `${s.from}->${s.to}`); assert.ok(s.say && s.label); }
-  const all = JSON.stringify(PATTERN);
-  assert.deepEqual(scanHosts(all), []);
-  assert.deepEqual(scanKeys(all), []);
+test('the pattern diagram, both paths: every step joins two known nodes, and no host or key is real', async () => {
+  const { buildPattern, PATHS } = await import('../src/patternData.js');
+  for (const { id } of PATHS) {
+    const P = buildPattern(id);
+    const ids = new Set(P.nodes.map((n) => n.id));
+    assert.equal(ids.size, P.nodes.length);
+    for (const s of P.steps) { assert.ok(ids.has(s.from) && ids.has(s.to), `${id} ${s.from}->${s.to}`); assert.ok(s.say && s.label); }
+    const all = JSON.stringify(P);
+    assert.deepEqual(scanHosts(all), []);
+    assert.deepEqual(scanKeys(all), []);
+  }
+  assert.ok(buildPattern('privilege').steps.some((s) => /coming soon/.test(s.label)));
+  assert.ok(buildPattern('ig').steps.some((s) => s.label === 'Token exchange (OBO)'));
 });

@@ -61,7 +61,7 @@ function Canvas({ pattern, positions, onMove, stepper }) {
   );
 }
 
-export default function PatternDiagram({ pattern }) {
+export default function PatternDiagram({ pattern, path, onPath }) {
   const initial = useMemo(() => Object.fromEntries(pattern.nodes.map((n) => [n.id, { x: n.x, y: n.y }])), [pattern]);
   const [positions, setPositions] = useState(initial);
   const stepper = useDiagramStepper(pattern.steps.length);
@@ -71,6 +71,11 @@ export default function PatternDiagram({ pattern }) {
   const reset = () => { stepper.stop(); setPositions(initial); setTimeout(() => window.dispatchEvent(new Event(REFIT_EVENT)), 0); };
   return (
     <section className="pat" aria-label={pattern.title}>
+      {pattern.paths && (
+        <div className="views" role="group" aria-label="MCP gateway path">
+          {pattern.paths.map((o) => <button key={o.id} type="button" aria-pressed={path === o.id} onClick={() => onPath(o.id)}>{o.label}</button>)}
+        </div>
+      )}
       <p className="intro">{pattern.intro}</p>
       <DiagramStepBar stepper={stepper} caption={step ? step.label : ""} testId="pattern-step-bar" />
       <button type="button" className="pat-reset" onClick={reset} data-testid="pattern-reset">Reset positions and walkthrough</button>

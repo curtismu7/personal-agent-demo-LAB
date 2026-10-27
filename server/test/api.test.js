@@ -95,7 +95,11 @@ test('GET /api/pattern serves the pattern diagram, uncached', async () => {
     assert.equal(r.status, 200);
     assert.equal(r.headers.get('cache-control'), 'no-store');
     const j = await r.json();
-    assert.equal(j.steps.length, 10);
-    assert.ok(j.nodes.some((n) => n.id === 'gateway'));
+    assert.equal(j.steps.length, 9);
+    assert.ok(j.nodes.some((n) => n.id === 'gateway' && n.label === 'Agent Privilege'));
+    const ig = await (await fetch(`${url}/api/pattern?path=ig`)).json();
+    assert.ok(ig.nodes.some((n) => n.label === 'Agent Gateway (IG)'));
+    const bad = await (await fetch(`${url}/api/pattern?path=zzz`)).json();
+    assert.equal(bad.title, j.title);
   });
 });
