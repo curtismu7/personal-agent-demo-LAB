@@ -7,9 +7,12 @@
       "description": "How an AI assistant reaches a member's benefits through an MCP gateway in twelve steps: discovery, CIMD, consent, signed code exchange, gateway check, policy decision. React Flow sequence diagram, mock token JSON, simulated approval modal, talk track. Mock only.",
       "url": "http://localhost:6900",
       "healthPath": "/api/health",
-      "composeFile": "docker-compose.yml",
+      "composeFile": "personal-agent-demo/docker-compose.yml",
       "composeOverlays": [],
-      "notes": "Host-run: ./scripts/run.sh (port 6900). Mock only: no tenant, no credentials. Docker: HOST_PORT=6900 docker compose up --build -d (published on 127.0.0.1 only). Brand it with customer.config.json (see customer.config.example.json). Hosted SE build: not deployed yet (first deploy is owner-approved)."
+      "notes": "Host-run: ./scripts/run.sh (port 6900). Mock only: no tenant, no credentials. Docker: HOST_PORT=6900 docker compose up --build -d (published on 127.0.0.1 only). Brand it with customer.config.json. Hosted mock-only copy on the SE cluster at mockUrl.",
+      "catalogId": "D21",
+      "where": "both",
+      "mockUrl": "https://personal-agent.ai-demo.ping-devops.com"
     }
   ]
 }
