@@ -103,3 +103,10 @@ test('the pattern diagram, both paths: every step joins two known nodes, and no 
   assert.ok(buildPattern('privilege').steps.some((s) => /coming soon/.test(s.label)));
   assert.ok(buildPattern('ig').steps.some((s) => s.label === 'Token exchange (OBO)'));
 });
+
+test('the discovery payloads use the RFC 9728 path-suffixed well-known URL and the authorize request carries a code_challenge', () => {
+  const f = buildFlow();
+  assert.match(f.payloads[2], /oauth-protected-resource\/mcp/);
+  assert.match(f.payloads[3], /oauth-protected-resource\/mcp/);
+  assert.match(f.payloads[8], /code_challenge_method: S256/);
+});

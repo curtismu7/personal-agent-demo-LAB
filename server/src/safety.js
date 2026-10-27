@@ -8,7 +8,7 @@
 
 export function isLoopbackHost(host) {
   const h = String(host).toLowerCase().replace(/^\[|\]$/g, '');
-  return h === 'localhost' || h === '::1' || /^127(\.\d{1,3}){3}$/.test(h);
+  return h === 'localhost' || h === '::1' || /^127(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test(h);
 }
 
 export function bindHost(env = process.env) { return env.PAGENT_BIND || '127.0.0.1'; }

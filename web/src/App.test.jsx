@@ -90,6 +90,39 @@ describe("App", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("the modal traps Tab, keeps page keys out, restores focus, and Esc does not leave presenter mode", async () => {
+    mockFetch();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByRole("button", { name: "Presenter" }));
+    const opener = screen.getByRole("button", { name: "Try a held request" });
+    opener.focus();
+    fireEvent.click(opener);
+    const approve = screen.getByRole("button", { name: "Approve" });
+    const decline = screen.getByRole("button", { name: "Decline" });
+    expect(document.activeElement).toBe(approve);
+    decline.focus();
+    fireEvent.keyDown(decline, { key: "Tab" });
+    expect(document.activeElement).toBe(approve);
+    fireEvent.keyDown(approve, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(decline);
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(screen.queryByTestId("track-now")).toBeNull();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Exit presenter" })).toBeTruthy();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("a #hop-N change on the same page opens that hop", async () => {
+    mockFetch();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    act(() => { window.location.hash = "#hop-2"; window.dispatchEvent(new HashChangeEvent("hashchange")); });
+    await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say two/));
+    window.location.hash = "";
+  });
+
   it("says so when the story cannot be loaded", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: false, status: 500, json: async () => ({}) });
     render(<App />);

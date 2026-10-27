@@ -21,7 +21,7 @@ export function loadCast(file) {
     for (const k of Object.keys(DEFAULT_CAST)) {
       const v = cfg?.cast?.[k];
       if (typeof v !== 'string' || !v.trim()) continue;
-      const clean = v.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').trim().slice(0, MAX_CAST);
+      const clean = v.replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g, ' ').trim().slice(0, MAX_CAST);
       // A display name is not a URL: anything that names a host or an address keeps the default.
       if (/:\/\/|@/.test(clean) || scanHosts(clean).length) continue;
       cast[k] = k === 'host' ? clean.toLowerCase() : clean;
@@ -36,7 +36,7 @@ export function rawStory() { return { source: SOURCE, payloads: PAYLOADS, detail
 export function buildFlow(cast = DEFAULT_CAST) {
   return {
     title: fill("How an AI assistant reaches {{brand}}'s member benefits", cast),
-    intro: fill("Twelve steps: the assistant discovers {{brand}}'s MCP gateway, finds the sign-in service, is identified by its client metadata, the member consents, the assistant proves itself with a signed assertion, and the gateway asks a policy engine before it calls the benefits API. The assistant is never trusted with a standing credential.", cast),
+    intro: fill("Twelve steps: the assistant discovers {{brand}}'s MCP gateway, finds the sign-in service, is identified by its client metadata, the member consents, the assistant proves itself with a signed assertion, and the gateway asks a policy engine before it calls the benefits API. The assistant never holds the member's credentials.", cast),
     cast,
     source: fill(SOURCE, cast),
     payloads: PAYLOADS.map((p) => (p === null ? null : fill(p, cast))),

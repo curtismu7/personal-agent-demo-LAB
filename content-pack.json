@@ -270,7 +270,7 @@
     {
       "id": "try-hop-12",
       "label": "Step 12: Authorized result",
-      "description": "The result goes back to the assistant, which explains it to the member. The assistant never held a standing credential for Northwind Health.",
+      "description": "The result goes back to the assistant, which explains it to the member. The assistant held its own signing key and a short-lived token, never the member's credentials.",
       "group": "try-it",
       "action": {
         "type": "route",
@@ -365,7 +365,7 @@
     {
       "id": "S12",
       "title": "Authorized result",
-      "say": "The result goes back to the assistant, which explains it to the member. The assistant never held a standing credential for Northwind Health."
+      "say": "The result goes back to the assistant, which explains it to the member. The assistant held its own signing key and a short-lived token, never the member's credentials."
     }
   ]
 }

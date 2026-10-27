@@ -69,13 +69,13 @@ export const SOURCE = `sequenceDiagram
 export const PAYLOADS = [
   null,
   'POST https://mcp.{{host}}.example/mcp\n(no Authorization header)\ntool: get_my_benefits',
-  'HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Bearer\n  resource_metadata="https://mcp.{{host}}.example/\n  .well-known/oauth-protected-resource"\n  scope="benefits:read"',
-  'GET https://mcp.{{host}}.example/\n  .well-known/oauth-protected-resource',
+  'HTTP/1.1 401 Unauthorized\nWWW-Authenticate: Bearer\n  resource_metadata="https://mcp.{{host}}.example/\n  .well-known/oauth-protected-resource/mcp"\n  scope="benefits:read"',
+  'GET https://mcp.{{host}}.example/\n  .well-known/oauth-protected-resource/mcp\n(RFC 9728 inserts the resource path, here /mcp)',
   json('Protected-resource metadata (RFC 9728)', { resource: 'https://mcp.{{host}}.example/mcp', authorization_servers: ['https://login.{{host}}.example'], scopes_supported: ['benefits:read'], bearer_methods_supported: ['header'] }),
   'GET https://login.{{host}}.example/\n  .well-known/oauth-authorization-server',
   json('Authorization-server metadata (RFC 8414)', { issuer: 'https://login.{{host}}.example', authorization_endpoint: 'https://login.{{host}}.example/oauth/authorize', token_endpoint: 'https://login.{{host}}.example/oauth/token', grant_types_supported: ['authorization_code'], code_challenge_methods_supported: ['S256'], client_id_metadata_document_supported: true, token_endpoint_auth_methods_supported: ['private_key_jwt'] }),
   null,
-  'client_id: https://assistant.example/oauth/client.json\nredirect_uri: https://assistant.example/oauth/callback\nscope: benefits:read\nresource: https://mcp.{{host}}.example/mcp\nresponse_type: code; state: <RANDOM_STATE>; PKCE: S256',
+  'client_id: https://assistant.example/oauth/client.json\nredirect_uri: https://assistant.example/oauth/callback\nscope: benefits:read\nresource: https://mcp.{{host}}.example/mcp\nresponse_type: code; state: <RANDOM_STATE>\ncode_challenge: <S256 of the verifier>; code_challenge_method: S256',
   'GET https://assistant.example/oauth/client.json\nThe identity provider validates the redirect URI and its client acceptance policy',
   json('CIMD client document', { client_id: 'https://assistant.example/oauth/client.json', client_name: 'Example AI assistant', redirect_uris: ['https://assistant.example/oauth/callback'], token_endpoint_auth_method: 'private_key_jwt', jwks_uri: 'https://assistant.example/oauth/jwks.json' }),
   'CONSENT SCREEN (example)\nClient: Example AI assistant | Member: signed-in {{program}} member\nAllow: /members/{me}/benefits (read)\nDownstream: {{brand}} Benefits API | Purpose: current coverage\n[ Deny ]  [ Allow benefits:read ]  (consent id + version persisted)',
@@ -98,9 +98,9 @@ export const PAYLOADS = [
 // Reel details per participant.
 export const DETAILS = {
   U: 'The member, in an AI assistant session. The browser, not the assistant, sends the authorization request to the identity provider and shows the consent prompt.',
-  C: 'The AI client. Identified by a published client metadata document (CIMD), proves itself with a signed client assertion (private_key_jwt) and PKCE S256. Holds the access token.',
+  C: 'The AI client. Identified by a published client metadata document (CIMD, an IETF draft), proves itself with a signed client assertion (private_key_jwt) and PKCE S256. Holds the access token.',
   G: 'Protected resource and enforcement point. Challenges with 401 + resource metadata, validates the token (signature, issuer, audience, expiry, scope, member, consent), asks the policy decision point, and only on Permit calls the benefits API.',
-  I: 'OAuth 2.1 authorization server and identity provider. Fetches the client CIMD, authenticates the member, records explicit resource-specific consent, verifies the client assertion against its JWKS and issues an audience-bound access token.',
+  I: 'OAuth authorization server (OAuth 2.1 profile, an IETF draft) and identity provider. Fetches the client CIMD, authenticates the member, records explicit resource-specific consent, verifies the client assertion against its JWKS and issues an audience-bound access token.',
   Z: 'Policy decision point. Evaluates member, client or agent, tool, target resource, action, entitlements and recorded consent. Consent is necessary where required, but never overrides policy.',
   B: 'Downstream resource. Only reached on a Permit; returns only the authorized member data.',
   O: 'Where the assistant publishes its CIMD (client.json) and public keys (jwks.json). Illustrative host.',
@@ -119,5 +119,5 @@ export const HOPS = [
   { n: 9, title: 'Gateway validation', first: 19, last: 19, say: 'Every call carries the token. The gateway checks signature, issuer, audience, expiry, scope, member and consent before anything else happens.' },
   { n: 10, title: 'Fine-grained decision', first: 20, last: 21, say: 'The gateway asks the policy decision point whether this member, through this client, may do this action on this resource. A Deny stops the call here.' },
   { n: 11, title: 'Downstream call', first: 22, last: 23, say: 'Only after a Permit does the gateway call the benefits API, which returns only this member\'s data.' },
-  { n: 12, title: 'Authorized result', first: 24, last: 25, say: 'The result goes back to the assistant, which explains it to the member. The assistant never held a standing credential for {{brand}}.' },
+  { n: 12, title: 'Authorized result', first: 24, last: 25, say: 'The result goes back to the assistant, which explains it to the member. The assistant held its own signing key and a short-lived token, never the member\'s credentials.' },
 ];

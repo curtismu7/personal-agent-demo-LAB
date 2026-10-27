@@ -36,10 +36,15 @@ export default function App() {
   // A Learning Hub card opens a hop with /#hop-3.
   const goToHash = stepper.goTo;
   useEffect(() => {
-    if (!flow) return;
-    const m = /^#hop-(\d{1,2})$/.exec(window.location.hash);
-    const h = m && flow.hops[Number(m[1]) - 1];
-    if (h) goToHash(h.first);
+    if (!flow) return undefined;
+    const open = () => {
+      const m = /^#hop-(\d{1,2})$/.exec(window.location.hash);
+      const h = m && flow.hops[Number(m[1]) - 1];
+      if (h) goToHash(h.first);
+    };
+    open();
+    window.addEventListener("hashchange", open);
+    return () => window.removeEventListener("hashchange", open);
   }, [flow, goToHash]);
 
   const source = useMemo(() => (flow ? wrapMessages(flow.source) : ""), [flow]);
@@ -55,6 +60,7 @@ export default function App() {
   // Presenter keys: right = next (starts at hop 1), left = previous, Escape leaves presenter mode, P toggles it.
   useEffect(() => {
     const onKey = (e) => {
+      if (holding) return; // the approval modal owns the keyboard while it is open
       if (e.metaKey || e.ctrlKey || e.altKey || /input|select|textarea/i.test(e.target?.tagName || "")) return;
       if (e.key === "ArrowRight") { e.preventDefault(); stepper.step < 0 ? stepper.goTo(0) : stepper.next(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); stepper.prev(); }
@@ -63,7 +69,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [stepper]);
+  }, [stepper, holding]);
 
   if (error) return <main className="app"><p role="alert" className="app-error">Could not load the walkthrough: {error}. Run <code>npm run doctor</code>.</p></main>;
   if (!flow) return <main className="app"><p>Loading…</p></main>;

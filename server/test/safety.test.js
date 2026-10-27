@@ -81,3 +81,15 @@ test('behind the ingress (Host rewritten to loopback) only the configured public
     if (saved === undefined) delete process.env.PAGENT_PUBLIC_HOST; else process.env.PAGENT_PUBLIC_HOST = saved;
   }
 });
+
+test('review fixes: octets above 255 are not loopback; 4840 is reserved; control and bidi characters are stripped', async () => {
+  assert.equal(isLoopbackHost('127.999.999.999'), false);
+  assert.equal(isLoopbackHost('127.0.0.1'), true);
+  assert.equal(isLoopbackHost('127.255.255.255'), true);
+  assert.ok(portProblem(4840));
+  const { loadCast } = await import('../src/flow.js');
+  const fs = await import('node:fs'); const os = await import('node:os'); const path = await import('node:path');
+  const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pad-')), 'customer.config.json');
+  fs.writeFileSync(f, JSON.stringify({ cast: { brand: 'Acme\u202eevil' } }));
+  assert.ok(!/\u202e/.test(loadCast(f).brand));
+});
