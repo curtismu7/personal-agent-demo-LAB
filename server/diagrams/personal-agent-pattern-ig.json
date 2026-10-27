@@ -1,0 +1,207 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "personal-agent-pattern-ig",
+  "title": "Personal Agent Pattern: Agent Gateway (IG) path",
+  "lede": "The same pattern with Agent Gateway (IG) as the MCP gateway. On this path the token exchange (OBO) is shown as available, through Agent IAM Core. UNVERIFIED: what IG enforces at each step has not been confirmed, so only the OBO difference is drawn.",
+  "groups": {
+    "actor": {
+      "label": "Actors",
+      "color": "dark"
+    },
+    "resource": {
+      "label": "Resources",
+      "color": "grey"
+    },
+    "gateway": {
+      "label": "MCP gateway",
+      "color": "red"
+    },
+    "iam": {
+      "label": "Agent IAM Core",
+      "color": "blue"
+    },
+    "authz": {
+      "label": "Agent Authorize",
+      "color": "green"
+    }
+  },
+  "nodes": [
+    {
+      "id": "user",
+      "label": "User",
+      "group": "actor",
+      "x": 0,
+      "y": 330
+    },
+    {
+      "id": "agent",
+      "label": "Personal Agent",
+      "group": "actor",
+      "x": 200,
+      "y": 330
+    },
+    {
+      "id": "llm",
+      "label": "LLM",
+      "group": "resource",
+      "x": 200,
+      "y": 520
+    },
+    {
+      "id": "gateway",
+      "label": "Agent Gateway (IG)",
+      "group": "gateway",
+      "x": 470,
+      "y": 330
+    },
+    {
+      "id": "mcp",
+      "label": "MCP",
+      "group": "actor",
+      "x": 740,
+      "y": 330
+    },
+    {
+      "id": "apigw",
+      "label": "API GW",
+      "group": "actor",
+      "x": 940,
+      "y": 330
+    },
+    {
+      "id": "resource",
+      "label": "Resource",
+      "group": "resource",
+      "x": 1140,
+      "y": 330
+    },
+    {
+      "id": "iam",
+      "label": "Agent IAM Core",
+      "group": "iam",
+      "x": 40,
+      "y": 20
+    },
+    {
+      "id": "authz",
+      "label": "Agent Authorize",
+      "group": "authz",
+      "x": 900,
+      "y": 20
+    }
+  ],
+  "edges": [
+    {
+      "source": "user",
+      "target": "agent",
+      "label": "asks"
+    },
+    {
+      "source": "agent",
+      "target": "llm",
+      "label": "prompt"
+    },
+    {
+      "source": "agent",
+      "target": "iam",
+      "label": "User authenticates"
+    },
+    {
+      "source": "agent",
+      "target": "gateway",
+      "label": "MCP / OIDC"
+    },
+    {
+      "source": "gateway",
+      "target": "iam",
+      "label": "Token exchange (OBO)"
+    },
+    {
+      "source": "gateway",
+      "target": "mcp",
+      "label": "MCP"
+    },
+    {
+      "source": "mcp",
+      "target": "apigw",
+      "label": "API call"
+    },
+    {
+      "source": "apigw",
+      "target": "authz",
+      "label": "Fine grained"
+    },
+    {
+      "source": "apigw",
+      "target": "resource",
+      "label": "allowed call"
+    }
+  ],
+  "steps": [
+    {
+      "title": "asks",
+      "what": "The user asks their personal agent for something. The agent is theirs; it acts for one person.",
+      "edges": [
+        0
+      ]
+    },
+    {
+      "title": "prompt",
+      "what": "The agent uses a language model to decide which tool to call. The model never holds a credential.",
+      "edges": [
+        1
+      ]
+    },
+    {
+      "title": "User authenticates",
+      "what": "The user signs in through Agent IAM Core. The agent receives a token whose audience is the MCP gateway and whose subject is the user.",
+      "payload": "{\n  \"aud\": \"https://aigateway.example\",\n  \"sub\": \"user\"\n}",
+      "edges": [
+        2
+      ]
+    },
+    {
+      "title": "MCP / OIDC",
+      "what": "The agent calls Agent Gateway (IG) over MCP with that token.",
+      "edges": [
+        3
+      ]
+    },
+    {
+      "title": "Token exchange (OBO)",
+      "what": "Agent Gateway (IG) swaps the token through Agent IAM Core for an on-behalf-of token for the MCP server, same subject. It depends on MCP support.",
+      "payload": "{\n  \"aud\": \"https://mcpserver.example\",\n  \"sub\": \"user\"\n}",
+      "edges": [
+        4
+      ]
+    },
+    {
+      "title": "MCP",
+      "what": "Agent Gateway (IG) calls the MCP server with the exchanged token.",
+      "edges": [
+        5
+      ]
+    },
+    {
+      "title": "API call",
+      "what": "The MCP server calls the backend through the API gateway.",
+      "edges": [
+        6
+      ]
+    },
+    {
+      "title": "Fine grained",
+      "what": "Agent Authorize applies finer-grained, business-level rules to this request and data.",
+      "edges": [
+        7
+      ]
+    },
+    {
+      "title": "allowed call",
+      "what": "Only a request that passed both layers reaches the resource.",
+      "edges": [
+        8
+      ]
+    }
+  ]
+}

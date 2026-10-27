@@ -1,4 +1,5 @@
-// One Express app. /api = health, the story, and a no-op reset (the story is data; there is no server state to wipe).
+// One Express app. /api = health, the story, the pattern diagrams, and the held-request decision, which is the only server state
+// and is kept per workspace id (X-Workspace) so one visitor's Approve or Reset never touches another's.
 // Loopback Host check and same-origin writes on everything. Serves web/dist when it exists.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,12 +10,13 @@ import { createHealth } from './health.js';
 import { buildFlow, loadCast } from './flow.js';
 import { hostedFrom, modeFrom } from './config.js';
 import { PATHS, buildPattern } from './patternData.js';
+import { createWorkspaces, workspaceFrom } from './workspaces.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIST = process.env.WEB_DIST || path.resolve(HERE, '../../web/dist');
 const CONFIG = process.env.CUSTOMER_CONFIG || path.resolve(HERE, '../../customer.config.json');
 
-export function createApp({ health = createHealth(), configFile = CONFIG, hosted = false } = {}) {
+export function createApp({ health = createHealth(), configFile = CONFIG, hosted = false, workspaces = createWorkspaces() } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use(hostCheck);
@@ -29,8 +31,21 @@ export function createApp({ health = createHealth(), configFile = CONFIG, hosted
   api.get('/pattern', (req, res) => { res.set('Cache-Control', 'no-store'); const id = PATHS.some((p) => p.id === req.query.path) ? req.query.path : 'privilege'; res.json(buildPattern(id)); });
   // What this build is, for the banner and for verifying a deploy by content (not by a 200).
   api.get('/info', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ mode: modeFrom(), simulated: true, hosted }); });
-  // Reset: the walkthrough lives in the browser, so this only confirms. Kept so `npm run reset` and the shelf behave like the other demos.
-  api.post('/reset', (_req, res) => res.json({ reset: 'ok' }));
+  // Held request (simulated approval): per-workspace decision. A bad workspace id is refused, never defaulted.
+  const withWorkspace = (handler) => (req, res) => {
+    const ws = workspaceFrom(req);
+    if (!ws) return res.status(400).json({ error: 'bad_workspace' });
+    res.set('Cache-Control', 'no-store');
+    return handler(ws, req, res);
+  };
+  api.get('/hold', withWorkspace((ws, _req, res) => res.json(workspaces.get(ws))));
+  api.post('/hold/decision', withWorkspace((ws, req, res) => {
+    const decision = req.body && req.body.decision;
+    if (decision !== 'approved' && decision !== 'declined') return res.status(400).json({ error: 'bad_decision' });
+    return res.json(workspaces.decide(ws, decision));
+  }));
+  // Reset clears this workspace's decision only; the walkthrough itself lives in the browser.
+  api.post('/reset', withWorkspace((ws, _req, res) => { workspaces.reset(ws); res.json({ reset: 'ok', workspace: ws }); }));
   api.use((_req, res) => res.status(404).json({ error: 'not_found' }));
   app.use('/api', api);
   // Errors become short JSON. Express's default handler would send an HTML stack trace with absolute file paths.

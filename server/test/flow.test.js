@@ -110,3 +110,18 @@ test('the discovery payloads use the RFC 9728 path-suffixed well-known URL and t
   assert.match(f.payloads[3], /oauth-protected-resource\/mcp/);
   assert.match(f.payloads[8], /code_challenge_method: S256/);
 });
+
+test('rule 17: the Pattern diagrams are diagram-studio/1 data files that pass the studio validator, and each step is one edge', async () => {
+  const fs = await import('node:fs');
+  const { validateDiagram } = await import('../src/diagramStudioValidate.js');
+  const { PATHS } = await import('../src/patternData.js');
+  for (const p of PATHS) {
+    const doc = JSON.parse(fs.readFileSync(new URL(`../diagrams/personal-agent-pattern-${p.id}.json`, import.meta.url), 'utf8'));
+    assert.equal(doc.schema, 'diagram-studio/1');
+    assert.deepEqual(validateDiagram(doc), []);
+    assert.equal(doc.steps.length, doc.edges.length);
+    doc.steps.forEach((s, i) => assert.deepEqual(s.edges, [i]));
+  }
+  const bad = { schema: 'diagram-studio/1', id: 'x', title: 't', groups: { a: { label: 'A', color: 'red' } }, nodes: [{ id: 'n', label: 'N', group: 'zzz', x: 0, y: 0 }], edges: [] };
+  assert.ok(validateDiagram(bad).length > 0, 'the vendored validator really rejects a bad diagram');
+});

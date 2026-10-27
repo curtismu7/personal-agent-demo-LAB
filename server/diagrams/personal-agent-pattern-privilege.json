@@ -1,0 +1,206 @@
+{
+  "schema": "diagram-studio/1",
+  "id": "personal-agent-pattern-privilege",
+  "title": "Personal Agent Pattern: Agent Privilege path",
+  "lede": "One person, one agent. The Ping Agentic Control Plane decides at three points: who the user is (Agent IAM Core), which tools the agent may use (Agent Privilege, which is also the MCP front door) and what the business rules allow (Agent Authorize).",
+  "groups": {
+    "actor": {
+      "label": "Actors",
+      "color": "dark"
+    },
+    "resource": {
+      "label": "Resources",
+      "color": "grey"
+    },
+    "gateway": {
+      "label": "MCP gateway",
+      "color": "red"
+    },
+    "iam": {
+      "label": "Agent IAM Core",
+      "color": "blue"
+    },
+    "authz": {
+      "label": "Agent Authorize",
+      "color": "green"
+    }
+  },
+  "nodes": [
+    {
+      "id": "user",
+      "label": "User",
+      "group": "actor",
+      "x": 0,
+      "y": 330
+    },
+    {
+      "id": "agent",
+      "label": "Personal Agent",
+      "group": "actor",
+      "x": 200,
+      "y": 330
+    },
+    {
+      "id": "llm",
+      "label": "LLM",
+      "group": "resource",
+      "x": 200,
+      "y": 520
+    },
+    {
+      "id": "gateway",
+      "label": "Agent Privilege",
+      "group": "gateway",
+      "x": 470,
+      "y": 330
+    },
+    {
+      "id": "mcp",
+      "label": "MCP",
+      "group": "actor",
+      "x": 740,
+      "y": 330
+    },
+    {
+      "id": "apigw",
+      "label": "API GW",
+      "group": "actor",
+      "x": 940,
+      "y": 330
+    },
+    {
+      "id": "resource",
+      "label": "Resource",
+      "group": "resource",
+      "x": 1140,
+      "y": 330
+    },
+    {
+      "id": "iam",
+      "label": "Agent IAM Core",
+      "group": "iam",
+      "x": 40,
+      "y": 20
+    },
+    {
+      "id": "authz",
+      "label": "Agent Authorize",
+      "group": "authz",
+      "x": 900,
+      "y": 20
+    }
+  ],
+  "edges": [
+    {
+      "source": "user",
+      "target": "agent",
+      "label": "asks"
+    },
+    {
+      "source": "agent",
+      "target": "llm",
+      "label": "prompt"
+    },
+    {
+      "source": "agent",
+      "target": "iam",
+      "label": "User authenticates"
+    },
+    {
+      "source": "agent",
+      "target": "gateway",
+      "label": "MCP / OIDC, tool check"
+    },
+    {
+      "source": "gateway",
+      "target": "iam",
+      "label": "OBO (coming soon)"
+    },
+    {
+      "source": "gateway",
+      "target": "mcp",
+      "label": "MCP"
+    },
+    {
+      "source": "mcp",
+      "target": "apigw",
+      "label": "API call"
+    },
+    {
+      "source": "apigw",
+      "target": "authz",
+      "label": "Fine grained"
+    },
+    {
+      "source": "apigw",
+      "target": "resource",
+      "label": "allowed call"
+    }
+  ],
+  "steps": [
+    {
+      "title": "asks",
+      "what": "The user asks their personal agent for something. The agent is theirs; it acts for one person.",
+      "edges": [
+        0
+      ]
+    },
+    {
+      "title": "prompt",
+      "what": "The agent uses a language model to decide which tool to call. The model never holds a credential.",
+      "edges": [
+        1
+      ]
+    },
+    {
+      "title": "User authenticates",
+      "what": "The user signs in through Agent IAM Core. The agent receives a token whose audience is the MCP gateway and whose subject is the user.",
+      "payload": "{\n  \"aud\": \"https://aigateway.example\",\n  \"sub\": \"user\"\n}",
+      "edges": [
+        2
+      ]
+    },
+    {
+      "title": "MCP / OIDC, tool check",
+      "what": "The agent calls Agent Privilege over MCP with that token. Agent Privilege applies tool-level (coarse to medium grained) authorization: may this user, through this agent, call this tool at all?",
+      "edges": [
+        3
+      ]
+    },
+    {
+      "title": "OBO (coming soon)",
+      "what": "Not available yet. When it is, Agent Privilege will swap the token for an on-behalf-of token for the MCP server (same subject), and it depends on MCP support. Until then the next call uses the credential the MCP server accepts.",
+      "edges": [
+        4
+      ]
+    },
+    {
+      "title": "MCP",
+      "what": "Agent Privilege uses the credential that server needs: OIDC, a static token or an API key.",
+      "edges": [
+        5
+      ]
+    },
+    {
+      "title": "API call",
+      "what": "The MCP server calls the backend through the API gateway.",
+      "edges": [
+        6
+      ]
+    },
+    {
+      "title": "Fine grained",
+      "what": "Agent Authorize applies finer-grained, business-level rules to this request and data.",
+      "edges": [
+        7
+      ]
+    },
+    {
+      "title": "allowed call",
+      "what": "Only a request that passed both layers reaches the resource.",
+      "edges": [
+        8
+      ]
+    }
+  ]
+}

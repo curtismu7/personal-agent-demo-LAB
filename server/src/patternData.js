@@ -1,48 +1,36 @@
 // The Personal Agent Pattern: who talks to whom, and which part of the Ping Agentic Control Plane decides at each hop.
-// Static, mock only. Hosts are .example. Each step is one arrow, walked in order by Simulate.
-const json = (obj) => JSON.stringify(obj, null, 2);
+// The diagrams are DATA in the diagram-studio/1 format (server/diagrams/*.json, loaded by name and checked with the studio's own
+// validator); nothing here builds nodes or edges by hand. Each step is one edge, walked in order by Simulate. A step may carry
+// an optional `payload` (mock token JSON), an extension the studio ignores. Mock only; hosts are .example.
+import fs from 'node:fs';
+import { validateDiagram } from './diagramStudioValidate.js';
 
-const node = (id, label, kind, x, y) => ({ id, label, kind, x, y });
-const common = (gatewayLabel) => [
-  node('user', 'User', 'actor', 0, 330), node('agent', 'Personal Agent', 'actor', 200, 330), node('llm', 'LLM', 'resource', 200, 520),
-  node('gateway', gatewayLabel, 'gateway', 470, 330), node('mcp', 'MCP', 'actor', 740, 330), node('apigw', 'API GW', 'actor', 940, 330),
-  node('resource', 'Resource', 'resource', 1140, 330),
-  node('iam', 'Agent IAM Core', 'lane-iam', 40, 20), node('authz', 'Agent Authorize', 'lane-authz', 900, 20),
-];
-const step = (from, to, label, say, payload = null) => ({ from, to, label, say, payload });
-const front = [
-  step('user', 'agent', 'asks', 'The user asks their personal agent for something. The agent is theirs; it acts for one person.'),
-  step('agent', 'llm', 'prompt', 'The agent uses a language model to decide which tool to call. The model never holds a credential.'),
-  step('agent', 'iam', 'User authenticates', 'The user signs in through Agent IAM Core. The agent receives a token whose audience is the MCP gateway and whose subject is the user.', json({ aud: 'https://aigateway.example', sub: 'user' })),
-];
-const back = [
-  step('mcp', 'apigw', 'API call', 'The MCP server calls the backend through the API gateway.'),
-  step('apigw', 'authz', 'Fine grained', 'Agent Authorize applies finer-grained, business-level rules to this request and data.'),
-  step('apigw', 'resource', 'allowed call', 'Only a request that passed both layers reaches the resource.'),
-];
-const OBO = json({ aud: 'https://mcpserver.example', sub: 'user' });
-
+const DIR = new URL('../diagrams/', import.meta.url);
 export const PATHS = [{ id: 'privilege', label: 'Agent Privilege' }, { id: 'ig', label: 'Agent Gateway (IG)' }];
 
+const load = (name) => {
+  const doc = JSON.parse(fs.readFileSync(new URL(`${name}.json`, DIR), 'utf8'));
+  const problems = validateDiagram(doc);
+  if (problems.length) throw new Error(`diagram ${name} is not valid diagram-studio/1: ${problems.join('; ')}`);
+  return doc;
+};
+const DOCS = Object.fromEntries(PATHS.map((p) => [p.id, load(`personal-agent-pattern-${p.id}`)]));
+
+// A studio group becomes a box style; the two control-plane lanes keep their own look.
+const kindOf = (group) => (group === 'iam' || group === 'authz' ? `lane-${group}` : group);
+
+export function diagramNames() { return PATHS.map((p) => `personal-agent-pattern-${p.id}`); }
+
 export function buildPattern(path = 'privilege') {
-  if (path === 'ig') {
-    return {
-      title: 'Personal Agent Pattern: Agent Gateway (IG) path',
-      intro: 'The same pattern with Agent Gateway (IG) as the MCP gateway. On this path the token exchange (OBO) is shown as available, through Agent IAM Core. UNVERIFIED: what IG enforces at each step has not been confirmed, so only the OBO difference is drawn.',
-      paths: PATHS, nodes: common('Agent Gateway (IG)'),
-      steps: [...front,
-        step('agent', 'gateway', 'MCP / OIDC', 'The agent calls Agent Gateway (IG) over MCP with that token.'),
-        step('gateway', 'iam', 'Token exchange (OBO)', 'Agent Gateway (IG) swaps the token through Agent IAM Core for an on-behalf-of token for the MCP server, same subject. It depends on MCP support.', OBO),
-        step('gateway', 'mcp', 'MCP', 'Agent Gateway (IG) calls the MCP server with the exchanged token.'), ...back],
-    };
-  }
+  const d = DOCS[path] || DOCS.privilege;
   return {
-    title: 'Personal Agent Pattern: Agent Privilege path',
-    intro: 'One person, one agent. The Ping Agentic Control Plane decides at three points: who the user is (Agent IAM Core), which tools the agent may use (Agent Privilege, which is also the MCP front door) and what the business rules allow (Agent Authorize).',
-    paths: PATHS, nodes: common('Agent Privilege'),
-    steps: [...front,
-      step('agent', 'gateway', 'MCP / OIDC, tool check', 'The agent calls Agent Privilege over MCP with that token. Agent Privilege applies tool-level (coarse to medium grained) authorization: may this user, through this agent, call this tool at all?'),
-      step('gateway', 'iam', 'OBO (coming soon)', 'Not available yet. When it is, Agent Privilege will swap the token for an on-behalf-of token for the MCP server (same subject), and it depends on MCP support. Until then the next call uses the credential the MCP server accepts.'),
-      step('gateway', 'mcp', 'MCP', 'Agent Privilege uses the credential that server needs: OIDC, a static token or an API key.'), ...back],
+    title: d.title,
+    intro: d.lede,
+    paths: PATHS,
+    nodes: d.nodes.map((n) => ({ id: n.id, label: n.label, kind: kindOf(n.group), x: n.x, y: n.y })),
+    steps: d.steps.map((s) => {
+      const e = d.edges[s.edges[0]];
+      return { from: e.source, to: e.target, label: s.title, say: s.what, payload: s.payload ?? null };
+    }),
   };
 }

@@ -11,9 +11,17 @@ const FLOW = {
   hops: [{ n: 1, title: "Discover", first: 0, last: 1, say: "say one" }, { n: 2, title: "Call", first: 2, last: 2, say: "say two" }],
 };
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
-const mockFetch = (flow = FLOW) => vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => (
-  String(url).endsWith("/api/flow") ? { ok: true, json: async () => flow } : { ok: true, json: async () => ({ reset: "ok" }) }));
+afterEach(() => { cleanup(); vi.restoreAllMocks(); for (const k of Object.keys(holds)) delete holds[k]; });
+const holds = {};
+const mockFetch = (flow = FLOW) => vi.spyOn(globalThis, "fetch").mockImplementation(async (url, opts = {}) => {
+  const u = String(url);
+  const ws = (opts.headers || {})["x-workspace"] || "none";
+  if (u.endsWith("/api/flow")) return { ok: true, json: async () => flow };
+  if (u.endsWith("/api/hold")) return { ok: true, json: async () => ({ workspace: ws, decision: holds[ws] || null }) };
+  if (u.endsWith("/api/hold/decision")) { holds[ws] = JSON.parse(opts.body).decision; return { ok: true, json: async () => ({ workspace: ws, decision: holds[ws] }) }; }
+  if (u.endsWith("/api/reset")) { delete holds[ws]; return { ok: true, json: async () => ({ reset: "ok", workspace: ws }) }; }
+  return { ok: true, json: async () => ({}) };
+});
 
 describe("hopFor", () => {
   it("maps a step to its hop and is null when the walkthrough is off", () => {
@@ -80,12 +88,12 @@ describe("App", () => {
     expect(screen.getByRole("dialog").textContent).toMatch(/Approval required/);
     expect(screen.getByRole("dialog").textContent).toMatch(/Simulated approval/);
     fireEvent.click(screen.getByRole("button", { name: "Approve" }));
-    expect(screen.getByTestId("approval-result").textContent).toMatch(/single-use approval receipt/);
+    expect((await screen.findByTestId("approval-result")).textContent).toMatch(/single-use approval receipt/);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
     fireEvent.click(screen.getByRole("button", { name: "Decline" }));
-    expect(screen.getByTestId("approval-result").textContent).toMatch(/stays blocked/);
+    expect((await screen.findByTestId("approval-result")).textContent).toMatch(/stays blocked/);
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
   });
@@ -112,6 +120,23 @@ describe("App", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Exit presenter" })).toBeTruthy();
     expect(document.activeElement).toBe(opener);
+  });
+
+  it("the decision is kept per workspace: reopening shows it, and Reset clears it", async () => {
+    mockFetch();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    await screen.findByTestId("approval-result");
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
+    expect((await screen.findByTestId("approval-result")).textContent).toMatch(/single-use approval receipt/);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset demo" }));
+    await waitFor(() => expect(Object.keys(holds).length).toBe(0));
+    fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
+    expect(screen.getByRole("dialog").textContent).toMatch(/Approval required/);
   });
 
   it("a #hop-N change on the same page opens that hop", async () => {

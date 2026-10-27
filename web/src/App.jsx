@@ -5,6 +5,7 @@ import { useDiagramStepper } from "./hooks/useDiagramStepper";
 import { REFIT_EVENT } from "./hooks/useFitOnResize";
 import { wrapMessages } from "./wrapMessages";
 import ApprovalModal from "./components/ApprovalModal";
+import { workspaceFetch } from "./workspace";
 import PatternDiagram from "./components/PatternDiagram";
 
 // The hop the focused message belongs to (null while the walkthrough is off).
@@ -54,7 +55,7 @@ export default function App() {
   const reset = useCallback(() => {
     stepper.stop();
     window.dispatchEvent(new Event(REFIT_EVENT));
-    fetch("/api/reset", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" }).catch(() => {});
+    workspaceFetch("/api/reset", { method: "POST", body: "{}" }).catch(() => {});
   }, [stepper]);
 
   // Presenter keys: right = next (starts at hop 1), left = previous, Escape leaves presenter mode, P toggles it.

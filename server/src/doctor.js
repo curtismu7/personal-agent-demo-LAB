@@ -4,6 +4,7 @@ import { assertBindAllowed, bindHost, portProblem, scanHosts, scanKeys, DEFAULT_
 import { netguardSelfTest } from './netguard.js';
 import { DEFAULT_CAST, buildFlow, messageCount, rawStory, unfilled } from './flow.js';
 import { modeFrom } from './config.js';
+import { PATHS, buildPattern } from './patternData.js';
 
 export async function runChecks({ env = process.env, cast = DEFAULT_CAST } = {}) {
   const checks = [];
@@ -35,6 +36,8 @@ export async function runChecks({ env = process.env, cast = DEFAULT_CAST } = {})
   const hosts = scanHosts(filled);
   add('story-hosts', hosts.length ? 'fail' : 'pass', hosts.length ? `non-reserved hosts: ${hosts.join(', ')}` : 'every host in the story is .invalid or .example');
   const keys = scanKeys(filled);
+  // The Pattern diagrams are diagram-studio/1 data; patternData validated them on import, so reaching here means they are valid.
+  add('diagrams', PATHS.every((p) => buildPattern(p.id).steps.length > 0) ? 'pass' : 'fail', `${PATHS.length} diagram-studio/1 diagrams load and validate`);
   add('story-keys', keys.length ? 'fail' : 'pass', keys.length ? 'key-looking values that are not sk-MOCK-' : 'no key-looking values in the story');
 
   const ng = await netguardSelfTest();
