@@ -1,0 +1,52 @@
+# MOCK-ONLY hosted build of personal-agent-demo for the SE cluster (rule 18). Same image as the standalone, MODE=mock,
+# PAGENT_HOSTED=1 (the banner then says HOSTED SIMULATION). No secrets, no tenant ids, no volumes with data.
+# Placeholders in ${...} are filled by k8s/deploy.sh; nothing here names a real host or registry path.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: personal-agent-demo
+  labels: { app: personal-agent-demo }
+spec:
+  replicas: 1   # no server state at all (the walkthrough lives in each visitor's browser), so visitors are isolated by construction; one pod is plenty
+  selector:
+    matchLabels: { app: personal-agent-demo }
+  template:
+    metadata:
+      labels: { app: personal-agent-demo }
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: app
+          image: ${IMAGE}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { name: http, containerPort: 6900 }
+          env:
+            - { name: MODE, value: mock }
+            - { name: PAGENT_HOSTED, value: "1" }
+            - { name: PAGENT_PUBLIC_HOST, value: ${SE_HOST} }
+            - { name: PORT, value: "6900" }
+            - { name: PAGENT_BIND, value: 0.0.0.0 }
+          readinessProbe:
+            httpGet: { path: /api/health, port: http, httpHeaders: [{ name: Host, value: "127.0.0.1:6900" }] }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health, port: http, httpHeaders: [{ name: Host, value: "127.0.0.1:6900" }] }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - { name: tmp, emptyDir: { sizeLimit: 16Mi } }

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: personal-agent-demo
+  labels: { app: personal-agent-demo }
+spec:
+  selector: { app: personal-agent-demo }
+  ports:
+    - { name: http, port: 80, targetPort: http }

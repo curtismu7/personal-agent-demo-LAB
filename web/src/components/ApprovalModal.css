@@ -1,0 +1,37 @@
+.apm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--th-bg-page) 70%, transparent);
+}
+.apm {
+  width: min(480px, 100%);
+  padding: 20px;
+  border: 2px solid var(--th-status-warning);
+  border-radius: var(--radius-lg);
+  background: var(--th-bg-card);
+  color: var(--th-text);
+}
+.apm h2 { margin: 0 0 8px; font-size: var(--font-size-lg); }
+.apm p { margin: 0 0 10px; }
+.apm-wire {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: var(--th-bg-inset);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+.apm-note {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--th-status-warning-bg);
+  color: var(--th-status-warning-text);
+  font-size: var(--font-size-sm);
+}
+.apm-actions { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -1,0 +1,98 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import App, { hopFor } from "./App.jsx";
+
+const FLOW = {
+  title: "How an AI assistant reaches Test Air's member benefits",
+  intro: "intro text",
+  source: "sequenceDiagram\n    autonumber\n    participant A as Agent\\nx\n    participant B as Door\\ny\n    A->>B: first message\n    B-->>A: second message\n    A->>B: third message",
+  payloads: ["a: 1", null, "b: 2"],
+  details: { A: "agent detail", B: "door detail" },
+  hops: [{ n: 1, title: "Discover", first: 0, last: 1, say: "say one" }, { n: 2, title: "Call", first: 2, last: 2, say: "say two" }],
+};
+
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+const mockFetch = (flow = FLOW) => vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => (
+  String(url).endsWith("/api/flow") ? { ok: true, json: async () => flow } : { ok: true, json: async () => ({ reset: "ok" }) }));
+
+describe("hopFor", () => {
+  it("maps a step to its hop and is null when the walkthrough is off", () => {
+    expect(hopFor(FLOW.hops, -1)).toBeNull();
+    expect(hopFor(FLOW.hops, 1).n).toBe(1);
+    expect(hopFor(FLOW.hops, 2).n).toBe(2);
+    expect(hopFor(FLOW.hops, 9)).toBeNull();
+  });
+});
+
+describe("App", () => {
+  it("always shows the simulation banner and the mock mode, with the story title", async () => {
+    mockFetch();
+    render(<App />);
+    expect(await screen.findByText(/reaches Test Air/)).toBeTruthy();
+    expect(screen.getByTestId("sim-banner").textContent).toMatch(/Simulated/);
+    expect(screen.getByTestId("mode").textContent).toMatch(/Mock/);
+  });
+
+  it("a #hop-2 link opens that hop", async () => {
+    window.location.hash = "#hop-2";
+    mockFetch();
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say two/));
+    window.location.hash = "";
+  });
+
+  it("the hosted build's banner says hosted simulation", async () => {
+    mockFetch({ ...FLOW, hosted: true });
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    expect(screen.getByTestId("sim-banner").textContent).toMatch(/Hosted simulation/);
+  });
+
+  it("picking a hop on the talk track jumps to it and shows what to say", async () => {
+    mockFetch();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByRole("button", { name: /Call/ }));
+    await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say two/));
+  });
+
+  it("presenter mode keeps the banner; the arrow keys walk the hops; Reset returns to the list", async () => {
+    const spy = mockFetch();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByRole("button", { name: "Presenter" }));
+    expect(screen.getByTestId("sim-banner")).toBeTruthy();
+    expect(screen.queryByText("intro text")).toBeNull();
+    act(() => { fireEvent.keyDown(window, { key: "ArrowRight" }); });
+    await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say one/));
+    act(() => { fireEvent.keyDown(window, { key: "ArrowRight" }); fireEvent.keyDown(window, { key: "ArrowRight" }); });
+    await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say two/));
+    fireEvent.click(screen.getByRole("button", { name: "Reset demo" }));
+    await waitFor(() => expect(screen.queryByTestId("track-now")).toBeNull());
+    expect(spy.mock.calls.some(([u, o]) => String(u).endsWith("/api/reset") && o?.method === "POST")).toBe(true);
+  });
+
+  it("a held request opens a modal; Approve releases one action, Decline keeps it blocked", async () => {
+    mockFetch();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
+    expect(screen.getByRole("dialog").textContent).toMatch(/Approval required/);
+    expect(screen.getByRole("dialog").textContent).toMatch(/Simulated approval/);
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    expect(screen.getByTestId("approval-result").textContent).toMatch(/single-use approval receipt/);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
+    fireEvent.click(screen.getByRole("button", { name: "Decline" }));
+    expect(screen.getByTestId("approval-result").textContent).toMatch(/stays blocked/);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("says so when the story cannot be loaded", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: false, status: 500, json: async () => ({}) });
+    render(<App />);
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Could not load/);
+  });
+});

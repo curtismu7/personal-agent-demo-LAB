@@ -1,0 +1,27 @@
+{
+  "name": "personal-agent-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A member's own AI agent meets an enterprise MCP door: discover, register, consent, per-call token exchange, gateway, policy decision, human approval, audit. A React Flow sequence diagram with mock tokens. Mock only: no tenant, no outbound network.",
+  "license": "MIT",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "npm start -w server",
+    "build": "npm run build -w web",
+    "test": "npm test -w server && npm test -w web && node --test scripts/*.test.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "reset": "node scripts/reset.mjs",
+    "prepare": "git config core.hooksPath .githooks || true",
+    "content-pack": "node scripts/build-content-pack.mjs && node scripts/validate-content-pack.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0"
+  }
+}

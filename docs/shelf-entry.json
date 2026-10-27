@@ -1,0 +1,15 @@
+{
+  "demos": [
+    {
+      "id": "personal-agent-demo",
+      "name": "Personal Agent Flow",
+      "kind": "Demo",
+      "description": "How an AI assistant reaches a member's benefits through an MCP gateway in twelve steps: discovery, client metadata (CIMD), sign-in and consent, signed code exchange, gateway validation and a fine-grained policy decision. React Flow sequence diagram with decoded mock token JSON under each message, a simulated held-action approval, talk track and presenter mode. Mock only.",
+      "url": "http://localhost:6900",
+      "healthPath": "/api/health",
+      "composeFile": "docker-compose.yml",
+      "composeOverlays": [],
+      "notes": "Host-run: ./scripts/run.sh (port 6900). Mock only: no tenant, no credentials. Docker: HOST_PORT=6900 docker compose up --build -d (published on 127.0.0.1 only). Brand it with customer.config.json (see customer.config.example.json). Hosted SE build: not deployed yet (first deploy is owner-approved)."
+    }
+  ]
+}
