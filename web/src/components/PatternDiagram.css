@@ -1,0 +1,17 @@
+.pat-canvas { height: 560px; border: 1px solid var(--th-border); border-radius: var(--radius-lg); background: var(--th-bg-card); }
+.pat-node { padding: 14px 16px; min-width: 110px; max-width: 190px; text-align: center; font-size: var(--font-size-sm); font-weight: 600; color: var(--th-text); background: var(--th-status-info-bg); border: 2px solid var(--th-status-info); border-radius: var(--radius-md); }
+.pat-node--gateway { border-width: 3px; }
+.pat-node--resource { border-color: var(--th-border-strong); background: var(--th-bg-inset); }
+.pat-node--lane-iam, .pat-node--lane-priv, .pat-node--lane-authz { min-width: 340px; padding: 26px 16px; font-size: var(--font-size-base); background: var(--th-bg-inset); border-color: var(--th-border-strong); }
+.pat-node--lane-priv { border-color: var(--th-status-warning); }
+.pat-node--lane-authz { border-color: var(--th-accent); }
+.pat-node--on { box-shadow: 0 0 0 3px var(--th-accent); }
+.pat-handle { opacity: 0; pointer-events: none; }
+.pat-edge path { stroke: var(--th-text-muted); stroke-width: 1.6; }
+.pat-edge--cp path { stroke: var(--th-accent); }
+.pat-edge--now path { stroke-width: 3.2; }
+.pat-edge--dim { opacity: 0.3; }
+.react-flow__edge-text { font-size: 12px; fill: var(--th-text); }
+.pat-reset { margin: 4px 0 8px; }
+.pat-json { margin: 8px 0 0; padding: 10px; background: var(--th-bg-inset); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: var(--font-size-sm); overflow-x: auto; }
+@media (max-width: 480px) { .pat-canvas { height: 420px; } }

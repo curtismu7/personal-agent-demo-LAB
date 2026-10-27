@@ -5,6 +5,7 @@ import { useDiagramStepper } from "./hooks/useDiagramStepper";
 import { REFIT_EVENT } from "./hooks/useFitOnResize";
 import { wrapMessages } from "./wrapMessages";
 import ApprovalModal from "./components/ApprovalModal";
+import PatternDiagram from "./components/PatternDiagram";
 
 // The hop the focused message belongs to (null while the walkthrough is off).
 export const hopFor = (hops, step) => (step < 0 ? null : hops.find((h) => step >= h.first && step <= h.last) || null);
@@ -14,12 +15,20 @@ export default function App() {
   const [error, setError] = useState(null);
   const [presenter, setPresenter] = useState(false);
   const [holding, setHolding] = useState(false);
+  const [pattern, setPattern] = useState(null);
+  const [view, setView] = useState(window.location.hash === "#pattern" ? "pattern" : "steps");
   const stepper = useDiagramStepper(flow ? flow.payloads.length : 0);
 
   useEffect(() => {
     let live = true;
     fetch("/api/flow").then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j) => live && setFlow(j), (e) => live && setError(e.message));
+    return () => { live = false; };
+  }, []);
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/pattern").then((r) => (r.ok ? r.json() : null)).then((j) => live && j && setPattern(j), () => {});
     return () => { live = false; };
   }, []);
 
@@ -76,6 +85,13 @@ export default function App() {
         </div>
       </header>
 
+      {pattern && (
+        <nav className="views" aria-label="View">
+          <button type="button" aria-pressed={view === "pattern"} onClick={() => setView("pattern")}>Pattern</button>
+          <button type="button" aria-pressed={view === "steps"} onClick={() => setView("steps")}>12 steps</button>
+        </nav>
+      )}
+      {view === "pattern" && pattern ? <PatternDiagram pattern={pattern} /> : <>
       <section className="track" aria-label="Talk track">
         {hop ? (
           <article className="track__now" data-testid="track-now">
@@ -96,6 +112,7 @@ export default function App() {
       <DiagramStepBar stepper={stepper} caption={hop ? hop.title : ""} />
       <SequenceFlowDiagram source={source} details={flow.details} payloads={flow.payloads} driver={stepper} label={flow.title} />
       {!presenter && <p className="keys">Keys: → next hop step, ← previous, P presenter, Esc leave presenter. Brand and names come from <code>customer.config.json</code>.</p>}
+      </>}
       {holding && <ApprovalModal brand={flow.cast?.brand || "the enterprise"} onClose={() => setHolding(false)} />}
     </main>
   );

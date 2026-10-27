@@ -1,5 +1,7 @@
 # Talk track
 
+Start on the **Pattern** tab (also `/#pattern`): User, Personal Agent, LLM, the Privilege AI Gateway, MCP, API GW and the resource, with the three control-plane lanes above them. Press Simulate to walk ten arrows: the user authenticates through Agent IAM Core, the optional token exchange gives a token for the MCP server, Agent Privilege decides at tool level, and Agent Authorize applies the business rules. Boxes are draggable; Reset restores them. Then switch to **12 steps** for the detailed sign-in and policy flow below.
+
 Twelve steps, one sentence of intent each. The app shows the same text in the talk-track panel.
 
 1. **Protected tool request.** The member asks the assistant for their benefits; the call has no token and the gateway answers 401 with a pointer to its metadata.

@@ -96,3 +96,18 @@ describe("App", () => {
     expect((await screen.findByRole("alert")).textContent).toMatch(/Could not load/);
   });
 });
+
+describe("pattern view", () => {
+  it("shows the Pattern tab, walks a step and Reset clears it", async () => {
+    const pattern = { title: "P", intro: "pattern intro", nodes: [{ id: "a", label: "A", kind: "actor", x: 0, y: 0 }, { id: "b", label: "B", kind: "actor", x: 200, y: 0 }], steps: [{ from: "a", to: "b", label: "go", say: "say go", payload: '{"aud":"x"}' }] };
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => ({ ok: true, json: async () => (String(url).endsWith("/api/pattern") ? pattern : String(url).endsWith("/api/flow") ? FLOW : { reset: "ok" }) }));
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "Pattern" }));
+    expect(screen.getByText("pattern intro")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /simulate/i }));
+    expect((await screen.findByTestId("pattern-now")).textContent).toMatch(/say go/);
+    expect(screen.getByTestId("pattern-json").textContent).toMatch(/aud/);
+    fireEvent.click(screen.getByTestId("pattern-reset"));
+    await waitFor(() => expect(screen.queryByTestId("pattern-now")).toBeNull());
+  });
+});

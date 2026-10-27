@@ -24,3 +24,4 @@ button:focus-visible { outline: 2px solid var(--th-status-info); outline-offset:
 .app--presenter .track__now p { font-size: var(--font-size-lg); line-height: 1.55; }
 .app--presenter .head h1 { font-size: var(--font-size-lg); }
 @media (max-width: 480px) { .head h1 { font-size: var(--font-size-lg); } }
+.views { display: flex; gap: 8px; margin: 8px 0; } .views button[aria-pressed="true"] { border-color: var(--th-accent); font-weight: 700; }

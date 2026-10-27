@@ -6,6 +6,8 @@ It also has a **held request**: the policy engine answers "approval required" an
 
 Mock only. Every host ends in `.example`, every token is a labelled teaching value, and the app makes no outbound network request (a netguard blocks them and tests prove it). It needs no tenant and no credentials. The architecture is illustrative, not a claim of any production deployment.
 
+The **Pattern** tab (`/#pattern`) shows the Personal Agent Pattern: the actors and the three Ping Agentic Control Plane lanes (Agent IAM Core, Agent Privilege, Agent Authorize) as a draggable React Flow diagram with Simulate, speed control and Reset.
+
 Related: `agent-mcp-door-demo` tells the catalog-to-audit story (publish, register, per-call exchange, approval, audit). This app is the twelve-step sign-in and policy-decision flow. This repo started from that app's scaffold (same server, doctor, k8s and diagram components) with its own story data.
 
 ## Run

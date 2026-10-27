@@ -88,3 +88,14 @@ test('an oversized or malformed body gets a short JSON error, never a stack trac
     assert.equal((await fetch(`${url}/api/health`)).status, 200, 'the server stays up');
   });
 });
+
+test('GET /api/pattern serves the pattern diagram, uncached', async () => {
+  await withServer(async (url) => {
+    const r = await fetch(`${url}/api/pattern`);
+    assert.equal(r.status, 200);
+    assert.equal(r.headers.get('cache-control'), 'no-store');
+    const j = await r.json();
+    assert.equal(j.steps.length, 10);
+    assert.ok(j.nodes.some((n) => n.id === 'gateway'));
+  });
+});
