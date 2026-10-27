@@ -7,4 +7,5 @@ Demo-tier standalone app (D21): a React Flow sequence diagram of an AI assistant
 - Diagram files in `web/src/components`, `hooks`, `utils` come from the sibling agent-mcp-door-demo scaffold (itself copied from AI-DEMO2). Never import across repos; re-copy to update.
 - The approval modal (`ApprovalModal.jsx`) is client-side only: no server state, no phone.
 - Rules that bite: loopback bind only; same-origin writes; zero outbound network (netguard); no customer, tenant or product-owner names or ids; ports 6900-6909; show tokens raw (education) but never a real credential.
+- CI runs Node 22 only (owner decision 2026-10-27); also checked locally on Node 20.
 - Open: rules 10, 14, 17; hosted SE deploy needs owner approval.

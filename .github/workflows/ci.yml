@@ -9,11 +9,11 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNS_ON || '["self-hosted","macOS"]') }}
     strategy:
       matrix:
-        # Node 22 on pull requests; 20 and 22 on push to main.
-        node: ${{ fromJSON(github.event_name == 'pull_request' && '[22]' || '[20,22]') }}
+        # Node 22 everywhere (owner decision 2026-10-27).
+        node: [22]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
       - run: npm ci
@@ -24,7 +24,7 @@ jobs:
   secrets:
     runs-on: ${{ fromJSON(vars.RUNS_ON || '["self-hosted","macOS"]') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - run: PATH="/opt/homebrew/bin:$PATH" gitleaks detect --source . --redact -v
