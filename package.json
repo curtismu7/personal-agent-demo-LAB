@@ -10,7 +10,7 @@
     "web"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=26"
   },
   "scripts": {
     "start": "npm start -w server",
@@ -19,7 +19,8 @@
     "doctor": "node scripts/doctor.mjs",
     "reset": "node scripts/reset.mjs",
     "prepare": "git config core.hooksPath .githooks || true",
-    "content-pack": "node scripts/build-content-pack.mjs && node scripts/validate-content-pack.mjs"
+    "content-pack": "node scripts/build-content-pack.mjs && node scripts/validate-content-pack.mjs",
+    "check:forbidden": "node scripts/check-forbidden-strings.mjs"
   },
   "devDependencies": {
     "ajv": "^8.20.0"
