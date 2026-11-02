@@ -49,7 +49,7 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.dreel-card--now .dreel-n { background: var(--status-info); }
+.dreel-card--now .dreel-n { background: var(--box-blue); }
 .dreel-title {
   font-size: var(--font-size-2xs);
   font-weight: 700;
