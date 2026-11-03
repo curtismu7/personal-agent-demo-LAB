@@ -30,7 +30,15 @@ export function createApp({ health = createHealth(), configFile = CONFIG, hosted
   api.get('/flow', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ ...buildFlow(loadCast(configFile)), hosted }); });
   api.get('/pattern', (req, res) => { res.set('Cache-Control', 'no-store'); const id = PATHS.some((p) => p.id === req.query.path) ? req.query.path : 'privilege'; res.json(buildPattern(id)); });
   // What this build is, for the banner and for verifying a deploy by content (not by a 200).
-  api.get('/info', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ mode: modeFrom(), simulated: true, hosted }); });
+  api.get('/info', (_req, res) => { res.set('Cache-Control', 'no-store'); res.json({ mode: modeFrom(), simulated: true, hosted, source: 'mock', realAvailable: false }); });
+  // Rule 19: the Mock/Real toggle. Only MODE=mock exists (config.js refuses anything else), so Real is never
+  // available: the switch keeps Mock and Real is refused with the reason.
+  api.post('/mode', (req, res) => {
+    const b = req.body;
+    if (!b || typeof b !== 'object' || Array.isArray(b) || Object.keys(b).length !== 1 || !['mock', 'real'].includes(b.source)) return res.status(400).json({ error: 'bad_request', message: 'body must be exactly {source: "mock" or "real"}' });
+    if (b.source === 'real') return res.status(409).json({ error: 'conflict', message: 'Real is not available: this app has a mock mode only. A live side is not implemented.' });
+    return res.status(200).json({ mode: modeFrom(), simulated: true, hosted, source: 'mock', realAvailable: false });
+  });
   // Held request (simulated approval): per-workspace decision. A bad workspace id is refused, never defaulted.
   const withWorkspace = (handler) => (req, res) => {
     const ws = workspaceFrom(req);
