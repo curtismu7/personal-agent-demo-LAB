@@ -17,6 +17,8 @@ const mockFetch = (flow = FLOW) => vi.spyOn(globalThis, "fetch").mockImplementat
   const u = String(url);
   const ws = (opts.headers || {})["x-workspace"] || "none";
   if (u.endsWith("/api/flow")) return { ok: true, json: async () => flow };
+  if (u.endsWith("/api/info")) return { ok: true, json: async () => ({ mode: "mock", simulated: true, hosted: false, source: "mock", realAvailable: false }) };
+  if (u.endsWith("/api/mode")) return { ok: false, status: 409, json: async () => ({ error: "conflict", message: "Real is not available: this app has a mock mode only." }) };
   if (u.endsWith("/api/hold")) return { ok: true, json: async () => ({ workspace: ws, decision: holds[ws] || null }) };
   if (u.endsWith("/api/hold/decision")) { holds[ws] = JSON.parse(opts.body).decision; return { ok: true, json: async () => ({ workspace: ws, decision: holds[ws] }) }; }
   if (u.endsWith("/api/reset")) { delete holds[ws]; return { ok: true, json: async () => ({ reset: "ok", workspace: ws }) }; }
