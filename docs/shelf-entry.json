@@ -14,5 +14,8 @@
       "where": "both",
       "mockUrl": "https://personal-agent.ai-demo.ping-devops.com"
     }
+  ],
+  "pingProducts": [
+    "pingfederate"
   ]
 }
