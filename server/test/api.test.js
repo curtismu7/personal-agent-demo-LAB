@@ -65,11 +65,11 @@ test('unknown API paths are 404 JSON', async () => {
 
 test('GET /api/info says what this build is: mock, simulated, and hosted only when asked', async () => {
   await withServer(async (url) => {
-    assert.deepEqual(await (await fetch(`${url}/api/info`)).json(), { mode: 'mock', simulated: true, hosted: false });
+    assert.deepEqual(await (await fetch(`${url}/api/info`)).json(), { mode: 'mock', simulated: true, hosted: false, source: 'mock', realAvailable: false });
     assert.equal((await (await fetch(`${url}/api/flow`)).json()).hosted, false);
   });
   await withServer(async (url) => {
-    assert.deepEqual(await (await fetch(`${url}/api/info`)).json(), { mode: 'mock', simulated: true, hosted: true });
+    assert.deepEqual(await (await fetch(`${url}/api/info`)).json(), { mode: 'mock', simulated: true, hosted: true, source: 'mock', realAvailable: false });
     assert.equal((await (await fetch(`${url}/api/flow`)).json()).hosted, true);
   }, { hosted: true });
 });
