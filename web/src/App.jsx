@@ -8,6 +8,7 @@ import ApprovalModal from "./components/ApprovalModal";
 import { workspaceFetch } from "./workspace";
 import PatternDiagram from "./components/PatternDiagram";
 import ModeToggle from "./components/ModeToggle";
+import ShelfLink from "./components/ShelfLink.jsx";
 
 // The hop the focused message belongs to (null while the walkthrough is off).
 export const hopFor = (hops, step) => (step < 0 ? null : hops.find((h) => step >= h.first && step <= h.last) || null);
@@ -93,6 +94,7 @@ export default function App() {
           {!presenter && <p className="intro">{flow.intro}</p>}
         </div>
         <div className="head__tools">
+            <ShelfLink />
           <ModeToggle info={modeInfo} onSelect={selectMode} />
           <button type="button" onClick={() => setPresenter((v) => !v)} aria-pressed={presenter}>{presenter ? "Exit presenter" : "Presenter"}</button>
           <button type="button" onClick={() => setHolding(true)} title="Simulate a sensitive request that the policy engine holds for approval">Try a held request</button>
