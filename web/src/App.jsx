@@ -13,8 +13,23 @@ import ShelfLink from "./components/ShelfLink.jsx";
 // The hop the focused message belongs to (null while the walkthrough is off).
 export const hopFor = (hops, step) => (step < 0 ? null : hops.find((h) => step >= h.first && step <= h.last) || null);
 
+const THEME_KEY = "pad.theme";
+const THEMES = [["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]];
+function initialTheme() {
+  try { const t = localStorage.getItem(THEME_KEY); if (t === "light" || t === "dark") return t; } catch { /* storage blocked */ }
+  return "auto";
+}
+
 export default function App() {
   const [flow, setFlow] = useState(null);
+  const [theme, setTheme] = useState(initialTheme);
+
+  useEffect(() => { if (theme === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = theme; }, [theme]);
+
+  const pickTheme = (next) => {
+    try { if (next === "auto") localStorage.removeItem(THEME_KEY); else localStorage.setItem(THEME_KEY, next); } catch { /* not remembered */ }
+    setTheme(next);
+  };
   const [error, setError] = useState(null);
   const [presenter, setPresenter] = useState(false);
   const [holding, setHolding] = useState(false);
@@ -96,6 +111,11 @@ export default function App() {
         <div className="head__tools">
             <ShelfLink />
           <ModeToggle info={modeInfo} onSelect={selectMode} />
+          <label className="shell-theme">Theme
+            <select value={theme} onChange={(e) => pickTheme(e.target.value)}>
+              {THEMES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+            </select>
+          </label>
           <button type="button" onClick={() => setPresenter((v) => !v)} aria-pressed={presenter}>{presenter ? "Exit presenter" : "Presenter"}</button>
           <button type="button" onClick={() => setHolding(true)} title="Simulate a sensitive request that the policy engine holds for approval">Try a held request</button>
           <button type="button" onClick={reset} title="Stop the walkthrough, refit the diagram and reset the demo">Reset demo</button>
