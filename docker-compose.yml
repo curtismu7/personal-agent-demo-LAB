@@ -9,7 +9,7 @@ services:
     ports:
       - "127.0.0.1:${HOST_PORT:-6900}:6900"
     environment:
-      SHELF_URL: ${SHELF_URL:-}
+      SHELF_URL: ${SHELF_URL:-http://127.0.0.1:4400}
       PORT: "6900"
       PAGENT_BIND: 0.0.0.0
     read_only: true
