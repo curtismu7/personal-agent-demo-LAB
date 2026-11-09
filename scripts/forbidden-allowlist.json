@@ -4,6 +4,14 @@
     {
       "host": "personal-agent.ai-demo.ping-devops.com",
       "reason": "intentionally public SE hosted-demo URL, owner-approved 2026-10-27, linked from the shelf"
+    },
+    {
+      "host": "local.ping-devops.com",
+      "reason": "The public name of the family lab-proxy (https://local.ping-devops.com:8443). The proxied same-origin write check compares the browser's Origin with it, so the tests must name it."
+    },
+    {
+      "host": "personal-agent-demo.local.ping-devops.com",
+      "reason": "The Host name the lab-proxy sends to this lab; LAB_ALLOWED_HOSTS defaults to it in docker-compose.yml, as in the other family labs."
     }
   ],
   "uuids": []
