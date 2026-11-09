@@ -1,22 +1,5 @@
-.apm-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-}
-.apm {
-  width: min(480px, 100%);
-  padding: 20px;
-  border: 2px solid var(--status-warn);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  color: var(--text);
-}
-.apm h2 { margin: 0 0 8px; font-size: var(--font-size-lg); }
+/* The frame is the shared FloatingDialog (.fd-panel); the warn colour marks its top edge. */
+.apm.fd-panel { border-top-color: var(--status-warn); }
 .apm p { margin: 0 0 10px; }
 .apm-wire {
   margin: 0 0 10px;

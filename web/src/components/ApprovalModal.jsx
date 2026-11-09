@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { workspaceFetch } from "../workspace";
+import FloatingDialog from "../floating-dialog/FloatingDialog";
 import "./ApprovalModal.css";
 
 // A held action: the policy engine answered "approval required", so the member decides on a modal they cannot miss.
 // Simulated: no push goes to a phone and nothing is sent anywhere; the decision lives in this component only.
+// The frame is the shared FloatingDialog (owner 2026-11-09): drag it by the title bar, resize it, or pop it out.
 export default function ApprovalModal({ brand, onClose }) {
   const [decision, setDecision] = useState(null);
   const [problem, setProblem] = useState(null);
@@ -31,6 +33,7 @@ export default function ApprovalModal({ brand, onClose }) {
     const onKey = (e) => {
       if (e.key === "Escape") { e.stopPropagation(); onClose(); return; }
       if (e.key !== "Tab") return;
+      if (dialog.current && dialog.current.ownerDocument !== document) return; // popped out: that window has its own focus
       // Trap focus inside the dialog.
       const items = [...(dialog.current?.querySelectorAll("button") || [])];
       if (!items.length) return;
@@ -43,10 +46,11 @@ export default function ApprovalModal({ brand, onClose }) {
     return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose]);
 
+  const title = decision ? (decision === "approved" ? "Approved" : "Declined") : "Approval required";
   return (
-    <div className="apm-backdrop" data-testid="approval-backdrop">
-      <section className="apm" ref={dialog} role="dialog" aria-modal="true" aria-labelledby="apm-title" data-testid="approval">
-        <h2 id="apm-title">{decision ? (decision === "approved" ? "Approved" : "Declined") : "Approval required"}</h2>
+    <FloatingDialog isOpen onClose={onClose} title={title} closeAriaLabel="Close approval" footer={null}
+      className="apm" testId="approval" defaultWidth={480} defaultHeight={null} minHeight={200}>
+      <div ref={dialog}>
         {!decision ? (
           <>
             <p>The assistant asked for <strong>sensitive benefit details</strong>. The policy engine returned <b>approval required</b>, so the gateway held the call.</p>
@@ -68,7 +72,7 @@ export default function ApprovalModal({ brand, onClose }) {
             <div className="apm-actions"><button type="button" ref={first} onClick={onClose}>Close</button></div>
           </>
         )}
-      </section>
-    </div>
+      </div>
+    </FloatingDialog>
   );
 }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import App, { hopFor } from "./App.jsx";
 
 const FLOW = {
@@ -122,6 +122,19 @@ describe("App", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Exit presenter" })).toBeTruthy();
     expect(document.activeElement).toBe(opener);
+  });
+
+  it("the approval modal is a FloatingDialog: modal, a title bar drag handle, and Escape closes it", async () => {
+    mockFetch();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
+    const dialog = screen.getByRole("dialog", { name: "Approval required" });
+    expect(dialog).toHaveClass("fd-panel");
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(within(dialog).getByTestId("fd-titlebar")).toBeInTheDocument();
+    fireEvent.keyDown(document.activeElement, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("the decision is kept per workspace: reopening shows it, and Reset clears it", async () => {
