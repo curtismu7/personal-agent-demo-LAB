@@ -56,6 +56,15 @@
       "definition": "The client authenticates to the token endpoint with a short signed assertion made with a key only it holds; the identity provider checks it against the published JWKS. It is client authentication, not sender constraint: a token already issued is still a bearer."
     },
     {
+      "id": "protect-risk-evaluation",
+      "term": "PingOne Protect risk evaluation",
+      "definition": "At sign-in the identity provider sends PingOne Protect the device and behaviour signals collected in the member's browser and gets back a risk level (low, medium or high), which it can use to step up the member or refuse to issue a code. Optionally Protect's bot detection can name the AI agent type; that claim is UNVERIFIED here. In this mock the evaluation is a stub with fixed values.",
+      "aliases": [
+        "Protect",
+        "risk level"
+      ]
+    },
+    {
       "id": "pkce",
       "term": "PKCE (S256)",
       "definition": "A one-time secret the client creates before the browser leg and proves at the token exchange, so a stolen authorization code is useless.",
@@ -184,15 +193,16 @@
     },
     {
       "id": "try-hop-6",
-      "label": "Step 6: Sign-in and consent",
-      "description": "The member signs in and sees a consent prompt that names the assistant, the data and the purpose. Approve stores a consent record; Deny issues no code.",
+      "label": "Step 6: Sign-in, risk evaluation and consent",
+      "description": "The member signs in and sees a consent prompt that names the assistant, the data and the purpose. While they do, the browser collects device and behaviour signals and the identity provider asks PingOne Protect for a risk level (a stub here); a high level can stop the code. Protect can optionally name the AI agent type (UNVERIFIED). Approve stores a consent record; Deny issues no code.",
       "group": "try-it",
       "action": {
         "type": "route",
         "href": "/#hop-6"
       },
       "terms": [
-        "consent-record"
+        "consent-record",
+        "protect-risk-evaluation"
       ],
       "story": "S06"
     },
@@ -334,8 +344,8 @@
     },
     {
       "id": "S06",
-      "title": "Sign-in and consent",
-      "say": "The member signs in and sees a consent prompt that names the assistant, the data and the purpose. Approve stores a consent record; Deny issues no code."
+      "title": "Sign-in, risk evaluation and consent",
+      "say": "The member signs in and sees a consent prompt that names the assistant, the data and the purpose. While they do, the browser collects device and behaviour signals and the identity provider asks PingOne Protect for a risk level (a stub here); a high level can stop the code. Protect can optionally name the AI agent type (UNVERIFIED). Approve stores a consent record; Deny issues no code."
     },
     {
       "id": "S07",

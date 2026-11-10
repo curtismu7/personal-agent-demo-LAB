@@ -10,7 +10,7 @@ const { version } = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 
 
 export function buildPack() {
   const flow = buildFlow(DEFAULT_CAST);
-  const terms = { 1: ['protected-resource-metadata'], 2: ['protected-resource-metadata'], 3: ['as-metadata'], 4: ['pkce'], 5: ['cimd'], 6: ['consent-record'], 7: ['private-key-jwt', 'pkce'], 8: ['audience-bound-token'], 9: ['audience-bound-token'], 10: ['policy-decision'], 11: ['policy-decision'], 12: ['audience-bound-token'] };
+  const terms = { 1: ['protected-resource-metadata'], 2: ['protected-resource-metadata'], 3: ['as-metadata'], 4: ['pkce'], 5: ['cimd'], 6: ['consent-record', 'protect-risk-evaluation'], 7: ['private-key-jwt', 'pkce'], 8: ['audience-bound-token'], 9: ['audience-bound-token'], 10: ['policy-decision'], 11: ['policy-decision'], 12: ['audience-bound-token'] };
   const sid = (n) => `S${String(n).padStart(2, '0')}`;
   const tryCard = (h) => ({ id: `try-hop-${h.n}`, label: `Step ${h.n}: ${h.title}`, description: h.say, group: 'try-it', action: { type: 'route', href: `/#hop-${h.n}` }, terms: terms[h.n], story: sid(h.n) });
   return {
@@ -25,6 +25,7 @@ export function buildPack() {
       { id: 'cimd', term: 'Client ID Metadata Document (CIMD)', definition: 'The client identifies itself by publishing a client document at a URL and using that URL as its client id. The identity provider fetches it to learn the redirect URI and the public keys, then checks them against its client acceptance policy.', aliases: ['client document', 'client.json'] },
       { id: 'consent-record', term: 'Consent record', definition: 'A stored, versioned record that this member allowed this client to use this scope on this resource. Consent is necessary where required but never overrides policy.' },
       { id: 'private-key-jwt', term: 'private_key_jwt', definition: 'The client authenticates to the token endpoint with a short signed assertion made with a key only it holds; the identity provider checks it against the published JWKS. It is client authentication, not sender constraint: a token already issued is still a bearer.' },
+      { id: 'protect-risk-evaluation', term: 'PingOne Protect risk evaluation', definition: 'At sign-in the identity provider sends PingOne Protect the device and behaviour signals collected in the member\'s browser and gets back a risk level (low, medium or high), which it can use to step up the member or refuse to issue a code. Optionally Protect\'s bot detection can name the AI agent type; that claim is UNVERIFIED here. In this mock the evaluation is a stub with fixed values.', aliases: ['Protect', 'risk level'] },
       { id: 'pkce', term: 'PKCE (S256)', definition: 'A one-time secret the client creates before the browser leg and proves at the token exchange, so a stolen authorization code is useless.', aliases: ['RFC 7636'] },
       { id: 'audience-bound-token', term: 'Audience-bound access token', definition: 'The access token names one audience (the MCP resource) and one scope, and lives minutes. The gateway rejects it anywhere else.', aliases: ['aud', 'at+jwt'] },
       { id: 'policy-decision', term: 'Policy decision point', definition: 'The service the gateway asks, with member, client, tool, action, resource and context, for Permit or Deny. The gateway enforces; the decision point decides.', aliases: ['PDP', 'P1AZ'] },

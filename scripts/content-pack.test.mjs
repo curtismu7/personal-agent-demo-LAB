@@ -39,3 +39,13 @@ test('the pack names no real company or tenant and shows no real credential', ()
   for (const w of ['united', 'mileageplus', 'datapower', 'optum', 'uhg']) assert.ok(!t.includes(w), w);
   assert.ok(!/https?:\/\/(?!(www\.rfc-editor\.org|localhost))/.test(t), 'only rfc-editor links and localhost');
 });
+
+test('the pack explains PingOne Protect: a glossary term, linked from the step 6 card, with the claim labelled UNVERIFIED', () => {
+  const pack = buildPack();
+  const term = pack.glossary.find((g) => g.id === 'protect-risk-evaluation');
+  assert.ok(term, 'glossary term');
+  assert.match(term.definition, /UNVERIFIED/);
+  const card = pack.cards.find((c) => c.story === 'S06');
+  assert.ok(card.terms.includes('protect-risk-evaluation'));
+  assert.match(pack.stories[5].say, /PingOne Protect/);
+});

@@ -45,3 +45,12 @@ test('no shipped text names a real customer, company or tenant', () => {
   walk(root);
   assert.deepEqual(hits, []);
 });
+
+test('the README and talk track say where PingOne Protect sits, that it is simulated, and label the agent-type claim UNVERIFIED', () => {
+  const readme = read('README.md');
+  assert.match(readme, /PingOne Protect \(step 6\)/);
+  assert.match(readme, /Simulated:\*\* the evaluation is static story data/);
+  assert.match(readme, /AI agent type[^.]*UNVERIFIED/);
+  assert.match(read('docs/talk-track.md'), /risk evaluation[\s\S]*PingOne Protect[\s\S]*UNVERIFIED/);
+  assert.match(read('CHANGELOG.md'), /PingOne Protect/);
+});
