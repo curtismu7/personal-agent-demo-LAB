@@ -9,7 +9,7 @@ import { scanHosts, scanKeys } from '../src/safety.js';
 test('the story has one payload slot per message and the 12 steps cover every message once, in order', () => {
   const r = rawStory();
   const n = messageCount(r.source);
-  assert.equal(n, 26);
+  assert.equal(n, 28);
   assert.equal(r.payloads.length, n);
   let next = 0;
   for (const h of r.hops) { assert.equal(h.first, next); assert.ok(h.last >= h.first); next = h.last + 1; }
@@ -124,4 +124,35 @@ test('rule 17: the Pattern diagrams are diagram-studio/1 data files that pass th
   }
   const bad = { schema: 'diagram-studio/1', id: 'x', title: 't', groups: { a: { label: 'A', color: 'red' } }, nodes: [{ id: 'n', label: 'N', group: 'zzz', x: 0, y: 0 }], edges: [] };
   assert.ok(validateDiagram(bad).length > 0, 'the vendored validator really rejects a bad diagram');
+});
+
+test('PingOne Protect is a participant and its two messages sit inside step 6, with payloads, and the steps stay twelve', () => {
+  const r = rawStory();
+  assert.match(r.source, /participant R as Risk engine\\nPingOne Protect/);
+  assert.ok(r.details.R && /UNVERIFIED/.test(r.details.R), 'reel detail for Protect, with the claim labelled');
+  const lines = r.source.split('\n');
+  const note = lines.findIndex((l) => /Note over .*Step 6/.test(l));
+  const end = lines.findIndex((l, i) => i > note && l.trim() === 'end');
+  const block = lines.slice(note, end);
+  assert.ok(block.some((l) => /I->>R:/.test(l)), 'request to Protect inside step 6');
+  assert.ok(block.some((l) => /R-->>I:/.test(l)), 'risk level back inside step 6');
+  assert.ok(!lines.some((l, i) => (i < note || i > end) && /\bR\b\s*-?-?>>|>>R:/.test(l)), 'Protect appears only in step 6');
+  const f = buildFlow();
+  assert.equal(f.hops.length, 12);
+  const six = f.hops[5];
+  assert.match(six.title, /risk evaluation/);
+  assert.match(six.say, /PingOne Protect/);
+  assert.equal(six.last - six.first + 1, 6, 'step 6 now covers six messages');
+  const slice = f.payloads.slice(six.first, six.last + 1).join('\n');
+  assert.match(slice, /Protect request \(STUB\)/);
+  assert.match(slice, /Protect result \(STUB\)/);
+  assert.match(slice, /"level": "LOW"/);
+  });
+
+test('the Protect agent-type claim is always labelled UNVERIFIED and no Protect text names a real host', () => {
+  const f = buildFlow();
+  const protectText = [f.details.R, ...f.payloads.filter((p) => p && /Protect (request|result)/.test(p)), f.hops[5].say];
+  for (const t of protectText) assert.ok(/UNVERIFIED|STUB/.test(t), t.slice(0, 40));
+  assert.ok(/agent_type/.test(f.payloads.join('\n')) && /UNVERIFIED/.test(f.payloads.join('\n')));
+  assert.deepEqual(scanHosts(protectText.join('\n')), []);
 });

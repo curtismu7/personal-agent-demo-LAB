@@ -31,7 +31,7 @@ test('GET /api/flow returns the filled story; customer.config.json is read on ea
   await withServer(async (url) => {
     let j = await (await fetch(`${url}/api/flow`)).json();
     assert.match(j.title, /Northwind Health/);
-    assert.equal(j.payloads.length, 26);
+    assert.equal(j.payloads.length, 28);
     assert.equal(j.hops.length, 12);
     fs.writeFileSync(file, JSON.stringify({ cast: { brand: 'Skyline Air' } }));
     j = await (await fetch(`${url}/api/flow`)).json();

@@ -1,6 +1,6 @@
 // The story: an AI assistant (the member's own agent) reaches a member's benefits through an MCP gateway, in twelve steps:
-// discovery, client metadata (CIMD), sign-in and consent, a signed code exchange, a gateway check and a fine-grained
-// policy decision. Text is data with {{tokens}} so the brand, program and host come from customer.config.json
+// discovery, client metadata (CIMD), sign-in and consent (with a PingOne Protect risk evaluation of the sign-in), a signed
+// code exchange, a gateway check and a fine-grained policy decision. Text is data with {{tokens}} so the brand, program and host come from customer.config.json
 // (see flow.js). Every host ends in .example and every token value is a teaching value: nothing here is a real
 // credential, tenant or customer. Illustrative architecture, not a claim of any production deployment.
 
@@ -12,6 +12,7 @@ export const SOURCE = `sequenceDiagram
     participant C as AI assistant\\nMCP client
     participant G as {{brand}} MCP gateway\\nenforcement point
     participant I as Identity provider\\nauthorize • token • JWKS
+    participant R as Risk engine\\nPingOne Protect
     participant Z as Policy decision point\\nPingOne Authorize
     participant B as {{brand}} Benefits API
     participant O as Assistant metadata\\nclient.json • jwks.json
@@ -37,9 +38,11 @@ export const SOURCE = `sequenceDiagram
     O-->>I: 200 OK
     end
     rect rgb(255,235,222)
-    Note over U,I: Step 6 — Sign-in and consent
+    Note over U,R: Step 6 — Sign-in, risk evaluation and consent
     I->>U: Login + resource-specific consent prompt
-    U->>I: Member approves or denies
+    U->>I: Member approves or denies (+ browser signals)
+    I->>R: Risk evaluation — device + behaviour signals
+    R-->>I: Risk level (and agent type, if detected)
     I->>U: 302 redirect
     U->>C: OAuth callback
     end
@@ -65,7 +68,7 @@ export const SOURCE = `sequenceDiagram
     end
 `;
 
-// One slot per message, in order (26). null = no payload under that message.
+// One slot per message, in order (28). null = no payload under that message.
 export const PAYLOADS = [
   null,
   'POST https://mcp.{{host}}.example/mcp\n(no Authorization header)\ntool: get_my_benefits',
@@ -80,6 +83,8 @@ export const PAYLOADS = [
   json('CIMD client document', { client_id: 'https://assistant.example/oauth/client.json', client_name: 'Example AI assistant', redirect_uris: ['https://assistant.example/oauth/callback'], token_endpoint_auth_method: 'private_key_jwt', jwks_uri: 'https://assistant.example/oauth/jwks.json' }),
   'CONSENT SCREEN (example)\nClient: Example AI assistant | Member: signed-in {{program}} member\nAllow: /members/{me}/benefits (read)\nDownstream: {{brand}} Benefits API | Purpose: current coverage\n[ Deny ]  [ Allow benefits:read ]  (consent id + version persisted)',
   json('Consent record stored on Approve (a Deny issues no code)', { consent_id: 'cns_7f3a', version: 3, member: 'mem_1042', client_id: 'https://assistant.example/oauth/client.json', scope: 'benefits:read', resource: 'https://mcp.{{host}}.example/mcp', granted_at: 'iat' }),
+  json('Protect request (STUB)', { event: 'sign-in', user: 'mem_1042', client_id: 'https://assistant.example/oauth/client.json', sdk_signals: '<DEVICE_AND_BEHAVIOUR_SIGNALS>', agent_identification: 'requested' }),
+  json('Protect result (STUB)', { result: { level: 'LOW' }, agent_detection: { detected: true, agent_type: 'Example AI assistant', status: 'UNVERIFIED' }, onHigh: 'step up the member or refuse the code' }),
   'HTTP/1.1 302 Found\nLocation: https://assistant.example/oauth/callback?\n  code=<AUTHORIZATION_CODE>&state=<RANDOM_STATE>',
   'GET /oauth/callback?code=<AUTHORIZATION_CODE>&state=<RANDOM_STATE>',
   json('Token request, decoded', { request: { grant_type: 'authorization_code', code: '<AUTHORIZATION_CODE>', redirect_uri: 'https://assistant.example/oauth/callback', resource: 'https://mcp.{{host}}.example/mcp', code_verifier: '<ORIGINAL_PKCE_VERIFIER>', client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer' }, client_assertion: { header: { alg: 'RS256', kid: 'assistant-key-1' }, claims: { iss: 'https://assistant.example/oauth/client.json', sub: 'https://assistant.example/oauth/client.json', aud: 'https://login.{{host}}.example/oauth/token', jti: '<unique id>', exp: 'iat + 60s' } } }),
@@ -103,6 +108,7 @@ export const DETAILS = {
   I: 'OAuth authorization server (OAuth 2.1 profile, an IETF draft) and identity provider. Fetches the client CIMD, authenticates the member, records explicit resource-specific consent, verifies the client assertion against its JWKS and issues an audience-bound access token.',
   Z: 'Policy decision point. Evaluates member, client or agent, tool, target resource, action, entitlements and recorded consent. Consent is necessary where required, but never overrides policy.',
   B: 'Downstream resource. Only reached on a Permit; returns only the authorized member data.',
+  R: 'Risk engine (PingOne Protect). At sign-in the identity provider sends it the device and behaviour signals collected in the member\'s browser and gets back a risk level. Optionally its bot detection can name the AI agent type; that claim is UNVERIFIED here. In this mock the evaluation is a stub with fixed values.',
   O: 'Where the assistant publishes its CIMD (client.json) and public keys (jwks.json). Illustrative host.',
 };
 
@@ -113,11 +119,11 @@ export const HOPS = [
   { n: 3, title: 'Discover the OAuth configuration', first: 5, last: 6, say: 'The authorization-server metadata says how to sign in: endpoints, PKCE, and that the client proves itself with a signed assertion.' },
   { n: 4, title: 'Browser authorization', first: 7, last: 8, say: 'The assistant sends the member to the identity provider. The browser makes the authorization request, so the assistant never sees the member credentials.' },
   { n: 5, title: 'Client metadata lookup (CIMD)', first: 9, last: 10, say: 'The client id is a URL. The identity provider fetches that document to learn the redirect URI and the keys, and checks them against its client acceptance policy.' },
-  { n: 6, title: 'Sign-in and consent', first: 11, last: 14, say: 'The member signs in and sees a consent prompt that names the assistant, the data and the purpose. Approve stores a consent record; Deny issues no code.' },
-  { n: 7, title: 'Code exchange and client verification', first: 15, last: 17, say: 'The assistant trades the code for a token and proves who it is with a signed assertion. The identity provider checks the signature against the published keys.' },
-  { n: 8, title: 'Access token', first: 18, last: 18, say: 'The token is bound to one audience and one scope, and lives minutes. The assistant holds it; it is not a session.' },
-  { n: 9, title: 'Gateway validation', first: 19, last: 19, say: 'Every call carries the token. The gateway checks signature, issuer, audience, expiry, scope, member and consent before anything else happens.' },
-  { n: 10, title: 'Fine-grained decision', first: 20, last: 21, say: 'The gateway asks the policy decision point whether this member, through this client, may do this action on this resource. A Deny stops the call here.' },
-  { n: 11, title: 'Downstream call', first: 22, last: 23, say: 'Only after a Permit does the gateway call the benefits API, which returns only this member\'s data.' },
-  { n: 12, title: 'Authorized result', first: 24, last: 25, say: 'The result goes back to the assistant, which explains it to the member. The assistant held its own signing key and a short-lived token, never the member\'s credentials.' },
+  { n: 6, title: 'Sign-in, risk evaluation and consent', first: 11, last: 16, say: 'The member signs in and sees a consent prompt that names the assistant, the data and the purpose. While they do, the browser collects device and behaviour signals and the identity provider asks PingOne Protect for a risk level (a stub here); a high level can stop the code. Protect can optionally name the AI agent type (UNVERIFIED). Approve stores a consent record; Deny issues no code.' },
+  { n: 7, title: 'Code exchange and client verification', first: 17, last: 19, say: 'The assistant trades the code for a token and proves who it is with a signed assertion. The identity provider checks the signature against the published keys.' },
+  { n: 8, title: 'Access token', first: 20, last: 20, say: 'The token is bound to one audience and one scope, and lives minutes. The assistant holds it; it is not a session.' },
+  { n: 9, title: 'Gateway validation', first: 21, last: 21, say: 'Every call carries the token. The gateway checks signature, issuer, audience, expiry, scope, member and consent before anything else happens.' },
+  { n: 10, title: 'Fine-grained decision', first: 22, last: 23, say: 'The gateway asks the policy decision point whether this member, through this client, may do this action on this resource. A Deny stops the call here.' },
+  { n: 11, title: 'Downstream call', first: 24, last: 25, say: 'Only after a Permit does the gateway call the benefits API, which returns only this member\'s data.' },
+  { n: 12, title: 'Authorized result', first: 26, last: 27, say: 'The result goes back to the assistant, which explains it to the member. The assistant held its own signing key and a short-lived token, never the member\'s credentials.' },
 ];

@@ -36,7 +36,7 @@ export function rawStory() { return { source: SOURCE, payloads: PAYLOADS, detail
 export function buildFlow(cast = DEFAULT_CAST) {
   return {
     title: fill("How an AI assistant reaches {{brand}}'s member benefits", cast),
-    intro: fill("Twelve steps: the assistant discovers {{brand}}'s MCP gateway, finds the sign-in service, is identified by its client metadata, the member consents, the assistant proves itself with a signed assertion, and the gateway asks a policy engine before it calls the benefits API. The assistant never holds the member's credentials.", cast),
+    intro: fill("Twelve steps: the assistant discovers {{brand}}'s MCP gateway, finds the sign-in service, is identified by its client metadata, the member signs in and consents (PingOne Protect scores the sign-in risk), the assistant proves itself with a signed assertion, and the gateway asks a policy engine before it calls the benefits API. The assistant never holds the member's credentials.", cast),
     cast,
     source: fill(SOURCE, cast),
     payloads: PAYLOADS.map((p) => (p === null ? null : fill(p, cast))),
