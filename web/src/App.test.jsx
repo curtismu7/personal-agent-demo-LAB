@@ -40,7 +40,7 @@ describe("App", () => {
     render(<App />);
     expect(await screen.findByText(/reaches Test Air/)).toBeTruthy();
     expect(screen.getByTestId("sim-banner").textContent).toMatch(/Simulated/);
-    expect(screen.getByTestId("mode").textContent).toMatch(/Mock/);
+    expect(screen.getByTestId("mode-select").textContent).toMatch(/Mock/);
   });
 
   it("a #hop-2 link opens that hop", async () => {
@@ -70,14 +70,14 @@ describe("App", () => {
     const spy = mockFetch();
     render(<App />);
     await screen.findByText(/reaches Test Air/);
-    fireEvent.click(screen.getByRole("button", { name: "Presenter" }));
+    fireEvent.click(screen.getByTestId("presenter"));
     expect(screen.getByTestId("sim-banner")).toBeTruthy();
     expect(screen.queryByText("intro text")).toBeNull();
     act(() => { fireEvent.keyDown(window, { key: "ArrowRight" }); });
     await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say one/));
     act(() => { fireEvent.keyDown(window, { key: "ArrowRight" }); fireEvent.keyDown(window, { key: "ArrowRight" }); });
     await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say two/));
-    fireEvent.click(screen.getByRole("button", { name: "Reset demo" }));
+    fireEvent.click(screen.getByTestId("reset"));
     await waitFor(() => expect(screen.queryByTestId("track-now")).toBeNull());
     expect(spy.mock.calls.some(([u, o]) => String(u).endsWith("/api/reset") && o?.method === "POST")).toBe(true);
   });
@@ -104,7 +104,7 @@ describe("App", () => {
     mockFetch();
     render(<App />);
     await screen.findByText(/reaches Test Air/);
-    fireEvent.click(screen.getByRole("button", { name: "Presenter" }));
+    fireEvent.click(screen.getByTestId("presenter"));
     const opener = screen.getByRole("button", { name: "Try a held request" });
     opener.focus();
     fireEvent.click(opener);
@@ -120,7 +120,7 @@ describe("App", () => {
     expect(screen.queryByTestId("track-now")).toBeNull();
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("button", { name: "Exit presenter" })).toBeTruthy();
+    expect(screen.getByTestId("presenter")).toBeTruthy();
     expect(document.activeElement).toBe(opener);
   });
 
@@ -148,7 +148,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
     expect((await screen.findByTestId("approval-result")).textContent).toMatch(/single-use approval receipt/);
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    fireEvent.click(screen.getByRole("button", { name: "Reset demo" }));
+    fireEvent.click(screen.getByTestId("reset"));
     await waitFor(() => expect(Object.keys(holds).length).toBe(0));
     fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
     expect(screen.getByRole("dialog").textContent).toMatch(/Approval required/);
