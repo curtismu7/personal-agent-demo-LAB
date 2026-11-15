@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import App, { hopFor } from "./App.jsx";
+import { setJsonView } from "./components/JsonPane.jsx";
 
 const FLOW = {
   title: "How an AI assistant reaches Test Air's member benefits",
@@ -171,6 +172,7 @@ describe("App", () => {
 });
 
 describe("pattern view", () => {
+  beforeEach(() => setJsonView("form"));
   it("shows the Pattern tab, walks a step and Reset clears it", async () => {
     const pattern = { title: "P", intro: "pattern intro", nodes: [{ id: "a", label: "A", kind: "actor", x: 0, y: 0 }, { id: "b", label: "B", kind: "actor", x: 200, y: 0 }], steps: [{ from: "a", to: "b", label: "go", say: "say go", payload: '{"aud":"x"}' }], paths: [{ id: "privilege", label: "Agent Privilege" }, { id: "ig", label: "Agent Gateway (IG)" }] };
     vi.spyOn(globalThis, "fetch").mockImplementation(async (url) => ({ ok: true, json: async () => (String(url).includes("/api/pattern") ? pattern : String(url).endsWith("/api/flow") ? FLOW : { reset: "ok" }) }));
@@ -181,7 +183,11 @@ describe("pattern view", () => {
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith("/api/pattern?path=ig"));
     fireEvent.click(screen.getByRole("button", { name: /simulate/i }));
     expect((await screen.findByTestId("pattern-now")).textContent).toMatch(/say go/);
+    // the payload is a JsonPane: the choice is shared module state, so name the view; the JSON view shows the string exactly as given
     expect(screen.getByTestId("pattern-json").textContent).toMatch(/aud/);
+    expect(screen.getByRole("button", { name: "JSON" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "JSON" }));
+    expect(screen.getByTestId("pattern-json").textContent).toBe('{"aud":"x"}');
     fireEvent.click(screen.getByTestId("pattern-reset"));
     await waitFor(() => expect(screen.queryByTestId("pattern-now")).toBeNull());
   });
