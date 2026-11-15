@@ -51,7 +51,7 @@ export function withStepDetail(reelSteps, steps) {
     if (d.form) lines.push({ who: "Request", code: d.form });
     (d.tokens || []).forEach((t) => {
       const decoded = { ...(t.header ? { header: t.header } : {}), claims: t.claims };
-      lines.push({ who: `Token: ${t.note.split("·")[0].trim()}`, code: `${t.note} (MOCK, teaching values only)\n${JSON.stringify(decoded, null, 2)}` });
+      lines.push({ who: `Token: ${t.note.split("·")[0].trim()}`, label: `${t.note} (MOCK, teaching values only)`, json: decoded });
     });
     return { ...r, lines, refs: d.refs || r.refs };
   });

@@ -107,6 +107,10 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
+/* A JSON payload is a full-view pane: the box grows to its content (the layout follows its measured height), text wraps, nothing scrolls. */
+.sfx-payload--json { white-space: normal; overflow: visible; line-height: 1.4; }
+.sfx-payload__title { margin: 0 0 4px; font-size: var(--font-size-2xs); font-weight: 700; color: var(--muted); }
+.sfx-payload--json .json--raw { margin: 0; font-size: var(--font-size-2xs); line-height: 15px; }
 .react-flow__node.dstep-hot .sfx-payload {
   border-color: var(--status-info);
   box-shadow: 0 0 0 2px var(--status-info);

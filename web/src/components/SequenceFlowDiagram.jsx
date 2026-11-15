@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   BaseEdge,
   Background,
@@ -18,6 +18,8 @@ import { parseSequence } from "../utils/parseSequence";
 import { markEdges, markNodes, stepEdges, useDiagramStepper } from "../hooks/useDiagramStepper";
 import DiagramReel from "./DiagramReel";
 import { buildNodeDetail, buildReelSteps } from "../utils/diagramReel";
+import { HOT_KEYS, splitPayload } from "../utils/payload";
+import Json from "./JsonPane.jsx";
 import { useFitOnResize, useFitOnSource } from "../hooks/useFitOnResize";
 import "./SequenceFlowDiagram.css";
 import SequenceActorHeader from "./SequenceActorHeader";
@@ -73,9 +75,30 @@ function Anchor() {
 function Note({ data }) {
   return <div className="sfx-note" style={{ width: data.w }}>{data.text}</div>;
 }
+// A JSON payload is a full-view pane (it never scrolls and wraps), so its height is not known from the line count: the box reports the height it
+// really has, and the layout below it moves to fit (the Form and the JSON view are different heights).
+const PayloadHeights = createContext(null);
+
 // A wire form or mock token shown under its message, like the payload boxes of a hand-drawn sequence diagram.
 function Payload({ data }) {
-  return <pre className="sfx-payload" style={{ width: data.w }}>{data.text}</pre>;
+  const report = useContext(PayloadHeights);
+  const ref = useRef(null);
+  const { title, json } = useMemo(() => splitPayload(data.text), [data.text]);
+  const isJson = json !== null;
+  useEffect(() => {
+    const el = ref.current;
+    if (!isJson || !el || !report || typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(() => report(data.idx, el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isJson, report, data.idx]);
+  if (!isJson) return <pre className="sfx-payload" style={{ width: data.w }}>{data.text}</pre>;
+  return (
+    <div className="sfx-payload sfx-payload--json nodrag nopan nowheel" style={{ width: data.w }} ref={ref}>
+      {title && <p className="sfx-payload__title">{title}</p>}
+      <Json value={json} label={title || "Payload"} hot={HOT_KEYS} />
+    </div>
+  );
 }
 function Fragment({ data }) {
   return <div className="sfx-frag" style={{ width: data.w }}>{data.text}</div>;
@@ -128,7 +151,8 @@ const ARROW = { type: "arrowclosed", width: 16, height: 16 };
 const PAYLOAD_CH = 7.8; // IBM Plex Mono at the app's size; a system mono is narrower, so it only leaves slack
 const PAYLOAD_LINE_H = 15;
 
-export function buildSequenceFlow(source, payloads = []) {
+// `heights` (payload index -> measured px) replaces the estimate for a JSON payload once its box has been drawn.
+export function buildSequenceFlow(source, payloads = [], heights = {}) {
   const model = parseSequence(source);
   // Two or more `box` groups are separate flows. Draw them stacked, each with its own
   // participant row, instead of side by side, so the diagram stays narrow enough to read.
@@ -198,14 +222,16 @@ export function buildSequenceFlow(source, payloads = []) {
       if (self) y += 26;
       const payload = payloads[n - 1];
       if (payload) {
-        const plines = payload.split("\n");
+        const { title, json } = splitPayload(payload);
+        const plines = (json ?? payload).split("\n");
         const allX = model.participants.map((p) => cx[p.id]);
-        const w = Math.min(560, Math.max(220, Math.ceil(Math.max(...plines.map((l) => l.length)) * PAYLOAD_CH) + 40));
+        const w = Math.min(560, Math.max(json === null ? 220 : 320, Math.ceil(Math.max(...plines.map((l) => l.length)) * PAYLOAD_CH) + 40));
         const left = Math.min(cx[it.from], cx[it.to]) - 12;
         const x = Math.max(Math.min(...allX) - 80, Math.min(left, Math.max(...allX) + 80 - w));
-        const h = plines.length * PAYLOAD_LINE_H + 16;
+        // a JSON pane: toggle row + title + its lines, until the box is measured
+        const h = json === null ? plines.length * PAYLOAD_LINE_H + 16 : heights[n - 1] ?? plines.length * PAYLOAD_LINE_H + 16 + 24 + (title ? 22 : 0);
         y += 8;
-        nodes.push({ id: `pl${n - 1}`, type: "payload", position: { x, y }, data: { text: payload, w }, draggable: false, selectable: false, zIndex: 1 });
+        nodes.push({ id: `pl${n - 1}`, type: "payload", position: { x, y }, data: { text: payload, w, idx: n - 1 }, draggable: false, selectable: false, zIndex: 1 });
         y += h + 6;
       }
     } else if (it.type === "note") {
@@ -277,7 +303,9 @@ function Inner({ source, step, active, details, driver, payloads }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const { nodes, edges, steps, bounds, messages, people, rows } = useMemo(() => buildSequenceFlow(source, payloads), [source, payloads]);
+  const [heights, setHeights] = useState({});
+  const reportHeight = useCallback((idx, px) => setHeights((cur) => (cur[idx] === px ? cur : { ...cur, [idx]: px })), []);
+  const { nodes, edges, steps, bounds, messages, people, rows } = useMemo(() => buildSequenceFlow(source, payloads, heights), [source, payloads, heights]);
   const rf = useReactFlow();
   // Fit to the page WIDTH and let the canvas grow to the drawing's height, so a 28-message
   // sequence stays at a readable size instead of shrinking to fit one screen.
@@ -297,7 +325,11 @@ function Inner({ source, step, active, details, driver, payloads }) {
       if (!reelStepper) return [];
       const built = buildReelSteps({ edges: messages, nodes: people, details });
       // the payload shown under a message is also its request form in the reel's details row
-      return built.map((r, i) => (payloads?.[i] ? { ...r, lines: [...r.lines, { who: "Payload", code: payloads[i] }] } : r));
+      return built.map((r, i) => {
+        if (!payloads?.[i]) return r;
+        const { title, json } = splitPayload(payloads[i]);
+        return { ...r, lines: [...r.lines, json === null ? { who: "Payload", code: payloads[i] } : { who: "Payload", label: title, json }] };
+      });
     },
     [reelStepper, messages, people, details, payloads],
   );
@@ -346,6 +378,7 @@ function Inner({ source, step, active, details, driver, payloads }) {
       <SequenceActorHeader actors={headerActors} segments={headerSegments} />
       <div className="sfx-canvas" data-testid="sequence-flow-canvas" ref={ref} style={fitHeight ? { height: fitHeight } : undefined}>
         <div className="sfx-flow" ref={flowRef} style={flowW > canvasW ? { width: flowW } : undefined}>
+        <PayloadHeights.Provider value={reportHeight}>
         <ReactFlow
           nodes={lit}
           edges={shown}
@@ -365,6 +398,7 @@ function Inner({ source, step, active, details, driver, payloads }) {
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} />
           <Controls showInteractive={false} />
         </ReactFlow>
+        </PayloadHeights.Provider>
         </div>
       </div>
     </>

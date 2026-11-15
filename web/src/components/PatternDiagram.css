@@ -16,5 +16,6 @@
 .react-flow__controls-button { background: var(--surface); color: var(--text); border-bottom: 1px solid var(--border); }
 .react-flow__controls-button svg { fill: currentColor; }
 .pat-reset { margin: 4px 0 8px; }
-.pat-json { margin: 8px 0 0; padding: 10px; background: var(--surface-2); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: var(--font-size-sm); overflow-x: auto; }
+.pat-payload { margin: 8px 0 0; padding: 10px; background: var(--surface-2); border-radius: var(--radius-md); }
+.pat-payload .json--raw { font-size: var(--font-size-sm); }
 @media (max-width: 480px) { .pat-canvas { height: 420px; } }

@@ -97,7 +97,10 @@
 }
 
 /* Code (request form, mock token) and the standards list in the step detail. */
-.dreel-code { margin: 0; padding: 8px 10px; max-height: 260px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font-family: var(--font-mono); font-size: var(--font-size-2xs); line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.dreel-code { margin: 0; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); color: var(--text); font-family: var(--font-mono); font-size: var(--font-size-2xs); line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.dreel-pane { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); }
+.dreel-pane__title { margin: 0 0 6px; font-size: var(--font-size-2xs); font-weight: 700; color: var(--muted); }
+.dreel-pane .json--raw { font-size: var(--font-size-2xs); line-height: 1.45; }
 .dreel-refs { margin-top: 12px; }
 .dreel-refs h4 { margin: 0 0 6px; font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: .06em; }
 .dreel-refs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }

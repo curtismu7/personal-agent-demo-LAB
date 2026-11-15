@@ -4,6 +4,8 @@ import "@xyflow/react/dist/style.css";
 import DiagramStepBar from "./DiagramStepBar";
 import { useDiagramStepper } from "../hooks/useDiagramStepper";
 import { REFIT_EVENT, useFitOnResize } from "../hooks/useFitOnResize";
+import Json from "./JsonPane.jsx";
+import { HOT_KEYS } from "../utils/payload";
 import "./PatternDiagram.css";
 
 const FIT = { padding: 0.08 };
@@ -83,7 +85,7 @@ export default function PatternDiagram({ pattern, path, onPath }) {
         <article className="track__now" data-testid="pattern-now">
           <h2>Step {stepper.step + 1}: {step.label}</h2>
           <p>{step.say}</p>
-          {step.payload && <pre className="pat-json" data-testid="pattern-json">{step.payload}</pre>}
+          {step.payload && <div className="pat-payload"><Json value={step.payload} label={`${step.label} payload`} testId="pattern-json" hot={HOT_KEYS} /></div>}
         </article>
       )}
       <ReactFlowProvider>

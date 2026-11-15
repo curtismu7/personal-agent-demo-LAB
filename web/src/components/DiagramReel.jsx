@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import Json from "./JsonPane.jsx";
+import { HOT_KEYS } from "../utils/payload";
 import "./DiagramStepBar.css";
 import "./DiagramReel.css";
 
@@ -7,6 +9,9 @@ import "./DiagramReel.css";
  * matching the arrow in focus. Clicking a card jumps there (and pauses) and opens the details row
  * BELOW the reel, in normal page flow, so the diagram above never gets smaller. A node click on the
  * diagram can pass `nodeDetail` to show that node instead.
+ *
+ * A detail line is { who, text } (plain text), { who, code } (wire text such as a request form) or { who, json, label } (a JSON pane: json is an
+ * object or a string holding one, label the title shown above it).
  *
  * Props: steps (buildReelSteps), stepper (useDiagramStepper), nodeDetail ({ title, lines } | null),
  * onClearNode, openKey (optional number: a change opens the details row for the step in focus), testId.
@@ -82,7 +87,14 @@ export default function DiagramReel({ steps, stepper, nodeDetail = null, onClear
               {panel.lines.map((l, i) => (
                 <div key={i}>
                   {l.who && <dt>{l.who}</dt>}
-                  <dd>{l.code ? <pre className="dreel-code">{l.code}</pre> : l.text}</dd>
+                  <dd>
+                    {l.json !== undefined ? (
+                      <div className="dreel-pane">
+                        {l.label && <p className="dreel-pane__title">{l.label}</p>}
+                        <Json value={l.json} label={l.label || l.who} hot={HOT_KEYS} />
+                      </div>
+                    ) : l.code ? <pre className="dreel-code">{l.code}</pre> : l.text}
+                  </dd>
                 </div>
               ))}
             </dl>
