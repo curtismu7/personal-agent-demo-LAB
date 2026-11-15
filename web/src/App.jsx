@@ -22,6 +22,15 @@ function initialTheme() {
   return "auto";
 }
 
+// The simulation banner comes first in every state, the loading and error states included.
+function SimBanner({ hosted = false }) {
+  return (
+    <div className="banner" role="note" data-testid="sim-banner">
+      <strong>{hosted ? "Hosted simulation." : "Simulated."}</strong> Every host, token and approval here is a teaching value. Nothing talks to a real tenant, and this page makes no call to one.
+    </div>
+  );
+}
+
 export default function App() {
   const [flow, setFlow] = useState(null);
   const [theme, setTheme] = useState(initialTheme);
@@ -100,42 +109,43 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [stepper, holding]);
 
-  if (error) return <main className="app"><p role="alert" className="app-error">Could not load the walkthrough: {error}. Run <code>npm run doctor</code>.</p></main>;
-  if (!flow) return <main className="app"><p>Loading…</p></main>;
+  if (error) return <main className="app"><SimBanner /><p role="alert" className="app-error">Could not load the walkthrough: {error}. Run <code>npm run doctor</code>.</p></main>;
+  if (!flow) return <main className="app"><SimBanner /><p>Loading…</p></main>;
 
+  const real = modeInfo?.source === "real";
   return (
-    <main className={`app${presenter ? " app--presenter" : ""}`}>
-      <div className="banner" role="note" data-testid="sim-banner">
-        <strong>{flow.hosted ? "Hosted simulation." : "Simulated."}</strong> Every host, token and approval here is a teaching value. Nothing talks to a real tenant, and this page makes no call to one.
-      </div>
-      <header className="head">
-        <div>
-          <h1>{flow.title}</h1>
-          {!presenter && <p className="intro">{flow.intro}</p>}
-        </div>
-        <div className="head__tools">
-            <TopMenu
-              mode={{ value: modeInfo?.source === "real" ? "real" : "mock", onChange: selectMode, realAvailable: modeInfo ? modeInfo.realAvailable === true : null, realHint: "Real is not available: this app has a mock mode only." }}
-              theme={{ value: theme, onChange: pickTheme }}
-              fontSize={{ value: fontStep, onChange: setFontStep }}
-              present={{ active: presenter, onToggle: () => setPresenter((v) => !v) }}
-              shelfUrl="https://local.ping-devops.com:8443/"
-              help={{ href: "https://github.com/curtismu7/personal-agent-demo-LAB#readme" }}
-              version={VERSION}
-              onReset={reset}
-            >
-              <ShelfLink />
-            </TopMenu>
-          <button type="button" onClick={() => setHolding(true)} title="Simulate a sensitive request that the policy engine holds for approval">Try a held request</button>
-        </div>
-      </header>
-
-      {pattern && (
-        <nav className="views" aria-label="View">
-          <button type="button" aria-pressed={view === "pattern"} onClick={() => setView("pattern")}>Pattern</button>
-          <button type="button" aria-pressed={view === "steps"} onClick={() => setView("steps")}>12 steps</button>
+    <>
+      <header className="shell-bar">
+        <span className="shell-brand">
+          <span className="shell-logo" aria-hidden="true">PA</span>
+          <span className="shell-name">Personal Agent Demo</span>
+          {real
+            ? <span className="shell-badge shell-badge--real" data-testid="mode-badge">Real</span>
+            : <span className="shell-badge" data-testid="mode-badge">Mock<span className="sr-only">: in-process mocks, no tenant contacted</span></span>}
+        </span>
+        <nav className="shell-nav" aria-label="Views">
+          {pattern && <button type="button" aria-pressed={view === "pattern"} aria-current={view === "pattern" ? "page" : undefined} onClick={() => setView("pattern")}>Pattern</button>}
+          <button type="button" aria-pressed={view === "steps" || !pattern} aria-current={view === "steps" || !pattern ? "page" : undefined} onClick={() => setView("steps")}>12 steps</button>
         </nav>
-      )}
+        <TopMenu
+          mode={{ value: real ? "real" : "mock", onChange: selectMode, realAvailable: modeInfo ? modeInfo.realAvailable === true : null, realHint: "Real is not available: this app has a mock mode only." }}
+          theme={{ value: theme, onChange: pickTheme }}
+          fontSize={{ value: fontStep, onChange: setFontStep }}
+          present={{ active: presenter, onToggle: () => setPresenter((v) => !v) }}
+          shelfUrl="https://local.ping-devops.com:8443/"
+          help={{ href: "https://github.com/curtismu7/personal-agent-demo-LAB#readme" }}
+          version={VERSION}
+          onReset={reset}
+        >
+          <ShelfLink />
+          <button type="button" onClick={() => setHolding(true)} title="Simulate a sensitive request that the policy engine holds for approval">Try a held request</button>
+        </TopMenu>
+      </header>
+      <main className={`app${presenter ? " app--presenter" : ""}`}>
+      <SimBanner hosted={flow.hosted} />
+      <h1>{flow.title}</h1>
+      {!presenter && <p className="intro">{flow.intro}</p>}
+
       {view === "pattern" && pattern ? <PatternDiagram key={patternPath} pattern={pattern} path={patternPath} onPath={setPatternPath} /> : <>
       <section className="track" aria-label="Talk track">
         {hop ? (
@@ -159,6 +169,7 @@ export default function App() {
       {!presenter && <p className="keys">Keys: → next hop step, ← previous, P presenter, Esc leave presenter. Brand and names come from <code>customer.config.json</code>.</p>}
       </>}
       {holding && <ApprovalModal brand={flow.cast?.brand || "the enterprise"} onClose={() => setHolding(false)} />}
-    </main>
+      </main>
+    </>
   );
 }

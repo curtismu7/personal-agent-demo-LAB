@@ -44,6 +44,22 @@ describe("App", () => {
     expect(screen.getByTestId("mode-select").textContent).toMatch(/Mock/);
   });
 
+  it("the shell bar holds the brand, the Mock badge, the view nav and the TopMenu; the banner and the title open <main>", async () => {
+    mockFetch();
+    const { container } = render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    const bar = container.querySelector("header.shell-bar");
+    expect(bar.querySelector(".shell-brand").textContent).toMatch(/Personal Agent Demo/);
+    expect(within(bar).getByTestId("mode-badge").textContent).toMatch(/Mock/);
+    expect(within(bar).getByRole("button", { name: "12 steps" })).toHaveAttribute("aria-current", "page");
+    expect(bar.querySelector(".shell-right")).not.toBeNull();
+    expect(within(bar).getByTestId("mode-select")).toBeTruthy();
+    expect(within(bar).getByRole("button", { name: "Try a held request" })).toBeTruthy();
+    const main = container.querySelector("main");
+    expect(main.firstElementChild).toBe(screen.getByTestId("sim-banner"));
+    expect(main.querySelector("h1").textContent).toMatch(/reaches Test Air/);
+  });
+
   it("a #hop-2 link opens that hop", async () => {
     window.location.hash = "#hop-2";
     mockFetch();

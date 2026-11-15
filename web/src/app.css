@@ -1,10 +1,23 @@
 /* Personal agent demo LAB: layout and components only. Colours, fonts, controls, dark mode and the banner come from standalone-ui.css, loaded first. */
-.app { max-width: 1400px; margin: 0 auto; padding: 0 0 32px; }
-.head { display: flex; gap: 16px; justify-content: space-between; align-items: center; padding: 12px 16px 8px; flex-wrap: nowrap; position: relative; background: var(--box-dark); color: var(--on-box); width: 100%; max-width: none; }
+.app { max-width: 1100px; margin: 0 auto; padding: 8px 0 32px; }
+/* Shell bar (STANDALONE-UI-PATTERNS.md section 1): Core Dark in both themes, Ping Red gradient rule, full-bleed; wraps at 600px. */
+.shell-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 10px 20px; margin: 0 -16px;
+  background: var(--box-dark); color: var(--on-box); border-bottom: 3px solid transparent; border-image: var(--accent-gradient) 1; }
+.shell-brand { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.02em; }
+.shell-name { font-size: 1.15rem; color: var(--on-box); }
+.shell-logo { display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 4px; background: var(--accent-gradient); color: var(--on-accent); font-weight: 800; font-size: 0.8rem; }
+.shell-badge { padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; background: var(--accent-gradient); color: var(--on-accent); font: 700 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.shell-badge--real { background: var(--surface-2); color: var(--status-warn); border-color: var(--status-warn); }
+.shell-nav { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 auto; }
+.shell-nav button { padding: 4px 12px; border-radius: 999px; border: 1px solid transparent; background: transparent; color: var(--on-box); font-size: 0.85rem; font-weight: 500; }
+.shell-nav button:hover { border-color: var(--on-box); }
+.shell-nav button[aria-current="page"] { background: var(--accent-gradient); color: var(--on-accent); border-color: transparent; font-weight: 600; }
+.shell-bar .shell-right { margin-left: auto; } /* TopMenu renders .top-menu.shell-right; its own layout stays */
+@media (max-width: 600px) { .shell-bar { padding: 10px 16px; } .shell-nav { order: 3; flex-basis: 100%; } }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 html { font-size: var(--fs, 16px); }
-.head h1 { margin: 0 0 4px; font-size: var(--font-size-xl); min-width: 0; max-width: 52%; }
+.app > h1 { margin: 12px 0 4px; font-size: var(--font-size-xl); }
 .intro { margin: 0; max-width: 70ch; color: var(--muted); font-size: var(--font-size-sm); line-height: 1.45; }
-.head__tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .chip { padding: 3px 10px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: var(--font-size-2xs); }
 .track { margin: 8px 0; }
 .track__list { list-style: none; display: flex; gap: 8px; padding: 0; margin: 0; flex-wrap: wrap; }
@@ -17,8 +30,8 @@ html { font-size: var(--fs, 16px); }
 /* Presenter mode: less chrome, bigger talk track. The simulation banner stays. */
 .app--presenter .track__now h2 { font-size: var(--font-size-xl); }
 .app--presenter .track__now p { font-size: var(--font-size-lg); line-height: 1.55; }
-.app--presenter .head h1 { font-size: var(--font-size-lg); }
-@media (max-width: 600px) { .head h1 { font-size: var(--font-size-lg); } }
+.app--presenter > h1 { font-size: var(--font-size-lg); }
+@media (max-width: 600px) { .app > h1 { font-size: var(--font-size-lg); } }
 .views { display: flex; gap: 8px; margin: 8px 0; }
 .mode-toggle { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
 .mode-toggle button { border: 0; border-radius: 0; padding: 3px 12px; background: var(--surface-2); color: var(--text); font-size: 0.85rem; cursor: default; }
