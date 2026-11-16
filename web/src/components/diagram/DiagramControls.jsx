@@ -122,9 +122,10 @@ function DiagramControls({
             title="Time each step takes during Simulate"
           />
           {!isSimulating ? (
+            /* ui-pattern: allow P9 one step bar renders per view, SequenceFlowDiagram draws its own only without an external driver */
             <button
               type="button"
-              className="dc-ctrl-btn dc-ctrl-btn--simulate"
+              className="dc-ctrl-btn dc-ctrl-btn--simulate primary"
               onClick={onSimulate}
             >
               Simulate

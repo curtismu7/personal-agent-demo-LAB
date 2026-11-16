@@ -1,4 +1,4 @@
-import { DiagramControls, STEP_TIME_OPTIONS } from "./diagram";
+import DiagramControls, { STEP_TIME_OPTIONS } from "./diagram/DiagramControls";
 import { REFIT_EVENT } from "../hooks/useFitOnResize";
 import "./DiagramStepBar.css";
 
