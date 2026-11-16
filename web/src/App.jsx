@@ -9,6 +9,7 @@ import ApprovalModal from "./components/ApprovalModal";
 import { workspaceFetch } from "./workspace";
 import PatternDiagram from "./components/PatternDiagram";
 import ShelfLink from "./components/ShelfLink.jsx";
+import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 
 const VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
@@ -138,6 +139,7 @@ export default function App() {
           onReset={reset}
         >
           <ShelfLink />
+          <VerifyMark id="personal-agent-demo" />
           <button type="button" onClick={() => setHolding(true)} title="Simulate a sensitive request that the policy engine holds for approval">Try a held request</button>
         </TopMenu>
       </header>
