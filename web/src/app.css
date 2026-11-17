@@ -1,5 +1,5 @@
 /* Personal agent demo LAB: layout and components only. Colours, fonts, controls, dark mode and the banner come from standalone-ui.css, loaded first. */
-.app { max-width: 1100px; margin: 0 auto; padding: 8px 0 32px; }
+.app { max-width: 2200px; margin: 0 auto; padding: 8px 0 32px; }
 /* Shell bar (STANDALONE-UI-PATTERNS.md section 1): Core Dark in both themes, Ping Red gradient rule, full-bleed; wraps at 600px. */
 .shell-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 10px 20px; margin: 0 -16px;
   background: var(--box-dark); color: var(--on-box); border-bottom: 3px solid transparent; border-image: var(--accent-gradient) 1; }
