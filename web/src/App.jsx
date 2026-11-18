@@ -11,6 +11,8 @@ import PatternDiagram from "./components/PatternDiagram";
 import ShelfLink from "./components/ShelfLink.jsx";
 import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
+import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
+import talkMd from "../../docs/talk-track.md?raw";
 
 const VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
 
@@ -46,6 +48,15 @@ export default function App() {
   };
   const [error, setError] = useState(null);
   const [presenter, setPresenter] = useState(false);
+  const [talkOpen, setTalkOpen] = useState(false);
+  const talkSteps = (() => {
+    const steps = []; let n = 0;
+    for (const line of talkMd.split("\n")) {
+      const m = line.match(/^\d+\.\s+\*\*(.+?)\.\*\*\s*(.*)$/);
+      if (m) { n += 1; steps.push({ id: `s${n}`, title: m[1], say: m[2] }); }
+    }
+    return steps.length ? steps : [{ id: "s1", title: "Talk track", say: talkMd.slice(0, 600) }];
+  })();
   const [holding, setHolding] = useState(false);
   const [pattern, setPattern] = useState(null);
   const [view, setView] = useState(window.location.hash === "#pattern" ? "pattern" : "steps");
@@ -133,6 +144,7 @@ export default function App() {
           theme={{ value: theme, onChange: pickTheme }}
           fontSize={{ value: fontStep, onChange: setFontStep }}
           present={{ active: presenter, onToggle: () => setPresenter((v) => !v) }}
+          talkTrack={{ active: talkOpen, onToggle: () => setTalkOpen((v) => !v) }}
           shelfUrl="https://local.ping-devops.com:8443/"
           help={{ href: "https://github.com/curtismu7/personal-agent-demo-LAB#readme" }}
           version={VERSION}
@@ -172,6 +184,8 @@ export default function App() {
       </>}
       {holding && <ApprovalModal brand={flow.cast?.brand || "the enterprise"} onClose={() => setHolding(false)} />}
       </main>
+      <TalkTrackDialog isOpen={talkOpen} onClose={() => setTalkOpen(false)} talk={talkSteps} />
+
     </>
   );
 }
