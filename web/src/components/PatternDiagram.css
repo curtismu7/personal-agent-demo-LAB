@@ -11,11 +11,12 @@
 .pat-edge--cp path { stroke: var(--accent); }
 .pat-edge--now path { stroke-width: 3.2; }
 .pat-edge--dim { opacity: 0.3; }
-.react-flow__edge-text { font-size: var(--font-size-2xs); fill: var(--text); }
-.react-flow__edge-textbg { fill: var(--surface); stroke: var(--border); stroke-width: 0.5; }
 .react-flow__controls-button { background: var(--surface); color: var(--text); border-bottom: 1px solid var(--border); }
 .react-flow__controls-button svg { fill: currentColor; }
 .pat-reset { margin: 4px 0 8px; }
 .pat-payload { margin: 8px 0 0; padding: 10px; background: var(--surface-2); border-radius: var(--radius-md); }
 .pat-payload .json--raw { font-size: var(--font-size-sm); }
 @media (max-width: 480px) { .pat-canvas { height: 420px; } }
+
+/* An expanded diagram box (the shared diagram kit's Passport) is wide enough for its details. */
+.react-flow__node.dk-open { width: 320px; }
