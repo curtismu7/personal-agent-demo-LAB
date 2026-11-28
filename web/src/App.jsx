@@ -12,6 +12,7 @@ import ShelfLink from "./components/ShelfLink.jsx";
 import VerifyMark from "./components/VerifyMark.jsx";
 import TopMenu, { applyFontSize } from "./top-menu/TopMenu.jsx";
 import TalkTrackDialog from "./talk-track/TalkTrackDialog.jsx";
+import ModeModal from "./mode-modal/ModeModal.jsx";
 import talkMd from "../../docs/talk-track.md?raw";
 
 const VERSION = (() => { try { return JSON.parse(fs.readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version || null; } catch { return null; } })();
@@ -25,14 +26,11 @@ function initialTheme() {
   return "auto";
 }
 
-// The simulation banner comes first in every state, the loading and error states included.
-function SimBanner({ hosted = false }) {
-  return (
-    <div className="banner" role="note" data-testid="sim-banner">
-      <strong>{hosted ? "Hosted simulation." : "Simulated."}</strong> Every host, token and approval here is a teaching value. Nothing talks to a real tenant, and this page makes no call to one.
-    </div>
-  );
-}
+// The Real-or-mock modal (shared mode-modal) opens the page in every state, the loading and error states included. This lab is Mock only
+// (the server answers source "mock" and refuses Real), so the mode is fixed; the hosted SE build gets its own line.
+export const MODE_LINES = (hosted) => ({
+  mock: `${hosted ? "Hosted simulation. " : ""}Every host, token and approval here is a teaching value. Nothing talks to a real tenant, and this page makes no call to one.`,
+});
 
 export default function App() {
   const [flow, setFlow] = useState(null);
@@ -121,8 +119,10 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [stepper, holding]);
 
-  if (error) return <main className="app"><SimBanner /><p role="alert" className="app-error">Could not load the walkthrough: {error}. Run <code>npm run doctor</code>.</p></main>;
-  if (!flow) return <main className="app"><SimBanner /><p>Loading…</p></main>;
+  // One element, keyed, last child of every return, so it never remounts between loading, error and loaded.
+  const modal = <ModeModal key="mode-modal" mode="mock" lines={MODE_LINES(Boolean(flow ? flow.hosted : modeInfo?.hosted))} storageKey="pad-mode" />;
+  if (error) return <><main className="app"><p role="alert" className="app-error">Could not load the walkthrough: {error}. Run <code>npm run doctor</code>.</p></main>{modal}</>;
+  if (!flow) return <><main className="app"><p>Loading…</p></main>{modal}</>;
 
   const real = modeInfo?.source === "real";
   return (
@@ -156,7 +156,6 @@ export default function App() {
         </TopMenu>
       </header>
       <main className={`app${presenter ? " app--presenter" : ""}`}>
-      <SimBanner hosted={flow.hosted} />
       <h1>{flow.title}</h1>
       {!presenter && <p className="intro">{flow.intro}</p>}
 
@@ -185,7 +184,7 @@ export default function App() {
       {holding && <ApprovalModal brand={flow.cast?.brand || "the enterprise"} onClose={() => setHolding(false)} />}
       </main>
       <TalkTrackDialog isOpen={talkOpen} onClose={() => setTalkOpen(false)} talk={talkSteps} />
-
+      {modal}
     </>
   );
 }

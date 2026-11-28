@@ -64,16 +64,17 @@ Port range 6900-6909 (default 6900). `GET /api/health` answers `demo-health/1`.
 
 ## Using it
 
+- **MOCK pop-up:** the page opens on a short **MOCK** pop-up (this app is Mock only; the hosted build says "Hosted simulation"). **Got it** or Esc closes it, and it stays away for the rest of the browser session.
 - **Talk track:** pick a step to jump to it; the panel shows what to say. **Simulate** (step bar) walks the 28 arrows; **Step time** sets the speed; the **movie reel** jumps to any message.
 - **Held request:** the header button opens the approval modal (Approve or Decline, Esc closes).
-- **Presenter:** the Presenter button (or `P`) hides the intro and enlarges the talk track. `→` next, `←` back, `Esc` leaves. The simulation banner stays.
+- **Presenter:** the Presenter button (or `P`) hides the intro and enlarges the talk track. `→` next, `←` back, `Esc` leaves.
 - **Reset demo:** stops the walkthrough and refits the diagram.
 - **Branding:** copy `customer.config.example.json` to `customer.config.json` and edit the three cast values (the default is brand AirGuard Airlines, program AirGuard Rewards, host `airguard`). It is git-ignored and read on every request.
 
 ## Notes
 
 - The text carries no customer or product-owner names. The flow follows an illustrative "AI assistant accesses member benefits" workflow supplied by the owner; hosts, ids and tokens are teaching values.
-- Hosted SE build (rule 18): the same image with `MODE=mock` and `PAGENT_HOSTED=1` (banner says "Hosted simulation"). Deployed 2026-10-27 (owner-approved; host recorded in the owner notes), verified by content (`GET /api/info` = `{mode: mock, simulated: true, hosted: true}`), pod imageID = registry digest. `k8s/` has the Deployment, Service, Certificate, Ingress and `deploy.sh` (`OWNER_APPROVED=1 NAMESPACE=<ns> IMAGE=<registry>/personal-agent-demo:<sha> SE_HOST=<host> INGRESS_CLASS=<class> CLUSTER_ISSUER=<issuer> k8s/deploy.sh [--dry-run]`; manifests use `__IMAGE__`, `__SE_HOST__`, `__INGRESS_CLASS__`, `__CLUSTER_ISSUER__`).
+- Hosted SE build (rule 18): the same image with `MODE=mock` and `PAGENT_HOSTED=1` (the opening MOCK pop-up says "Hosted simulation"). Deployed 2026-10-27 (owner-approved; host recorded in the owner notes), verified by content (`GET /api/info` = `{mode: mock, simulated: true, hosted: true}`), pod imageID = registry digest. `k8s/` has the Deployment, Service, Certificate, Ingress and `deploy.sh` (`OWNER_APPROVED=1 NAMESPACE=<ns> IMAGE=<registry>/personal-agent-demo:<sha> SE_HOST=<host> INGRESS_CLASS=<class> CLUSTER_ISSUER=<issuer> k8s/deploy.sh [--dry-run]`; manifests use `__IMAGE__`, `__SE_HOST__`, `__INGRESS_CLASS__`, `__CLUSTER_ISSUER__`).
 - Learning Hub: `content-pack.json` (`demo-content-pack/1`, built by `npm run content-pack` from the same story data). Cards open a step with `/#hop-3`. Catalog id D21.
 - **Inherited rulings, to confirm for this app:** the sibling app's owner rulings (2026-10-24) were rule 13 N/A (no server state) and rule 5 accepted (a sequence diagram's participants stay on their lifelines, no movable boxes; Simulate, speed, Reset and the reel exist). Both are carried over here unconfirmed.
 - **PingOne Protect (step 6):** while the member signs in, the browser collects device and behaviour signals and the identity provider asks PingOne Protect for a risk evaluation and gets a risk level back (a "Risk engine PingOne Protect" participant, two messages). **Simulated:** the evaluation is static story data (a fixed LOW level), not a call to any service; the request and result field names are illustrative, no signals are collected and nothing leaves the process. The optional AI-agent-type detection in the result is a stub value too.

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
-import App, { hopFor } from "./App.jsx";
+import App, { hopFor, MODE_LINES } from "./App.jsx";
 import { setJsonView } from "./components/JsonPane.jsx";
 
 const FLOW = {
@@ -12,7 +12,7 @@ const FLOW = {
   hops: [{ n: 1, title: "Discover", first: 0, last: 1, say: "say one" }, { n: 2, title: "Call", first: 2, last: 2, say: "say two" }],
 };
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); for (const k of Object.keys(holds)) delete holds[k]; });
+afterEach(() => { cleanup(); sessionStorage.clear(); vi.restoreAllMocks(); for (const k of Object.keys(holds)) delete holds[k]; });
 const holds = {};
 const mockFetch = (flow = FLOW) => vi.spyOn(globalThis, "fetch").mockImplementation(async (url, opts = {}) => {
   const u = String(url);
@@ -36,15 +36,53 @@ describe("hopFor", () => {
 });
 
 describe("App", () => {
-  it("always shows the simulation banner and the mock mode, with the story title", async () => {
+  it("opens on the MOCK modal with the lab's line and the mock mode, with the story title; the old banner is gone", async () => {
     mockFetch();
     render(<App />);
     expect(await screen.findByText(/reaches Test Air/)).toBeTruthy();
-    expect(screen.getByTestId("sim-banner").textContent).toMatch(/Simulated/);
+    expect(screen.getByTestId("mode-modal")).toHaveAttribute("data-mode", "mock");
+    expect(screen.getByTestId("mode-modal").textContent).toMatch(/MOCK/);
+    expect(screen.getByTestId("mode-modal").textContent).toMatch(/Every host, token and approval here is a teaching value\. Nothing talks to a real tenant, and this page makes no call to one\./);
+    expect(screen.getByTestId("mode-modal").textContent).not.toMatch(/Hosted simulation/);
     expect(screen.getByTestId("mode-select").textContent).toMatch(/Mock/);
+    expect(screen.queryByTestId("sim-banner")).toBeNull();
+    expect(document.querySelector("main .banner")).toBeNull();
   });
 
-  it("the shell bar holds the brand, the Mock badge, the view nav and the TopMenu; the banner and the title open <main>", async () => {
+  it("Got it closes the modal and a re-render in the same session does not show it again (Mock only: no switch to REAL)", async () => {
+    mockFetch();
+    const { unmount } = render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByTestId("mode-modal-ok"));
+    expect(screen.queryByTestId("mode-modal")).toBeNull();
+    unmount();
+    render(<App />);
+    await screen.findByText(/reaches Test Air/);
+    expect(screen.queryByTestId("mode-modal")).toBeNull();
+  });
+
+  it("the modal is there while the story loads and when it cannot load (loading and error states), and one dismissal covers all three", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation(() => new Promise(() => {}));
+    render(<App />);
+    expect(screen.getByText("Loading…")).toBeTruthy();
+    expect(screen.getByTestId("mode-modal")).toHaveAttribute("data-mode", "mock");
+    cleanup();
+    vi.restoreAllMocks();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: false, status: 500, json: async () => ({}) });
+    render(<App />);
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Could not load/);
+    expect(screen.getByTestId("mode-modal")).toHaveAttribute("data-mode", "mock");
+  });
+
+  it("the modal stays mounted (the same element) from loading to loaded, so a click is never lost", async () => {
+    mockFetch();
+    render(<App />);
+    const before = screen.getByTestId("mode-modal");
+    await screen.findByText(/reaches Test Air/);
+    expect(screen.getByTestId("mode-modal")).toBe(before);
+  });
+
+  it("the shell bar holds the brand, the Mock badge, the view nav and the TopMenu; the title opens <main> and there is no banner", async () => {
     mockFetch();
     const { container } = render(<App />);
     await screen.findByText(/reaches Test Air/);
@@ -56,7 +94,8 @@ describe("App", () => {
     expect(within(bar).getByTestId("mode-select")).toBeTruthy();
     expect(within(bar).getByRole("button", { name: "Try a held request" })).toBeTruthy();
     const main = container.querySelector("main");
-    expect(main.firstElementChild).toBe(screen.getByTestId("sim-banner"));
+    expect(main.firstElementChild).toBe(main.querySelector("h1"));
+    expect(screen.queryByTestId("sim-banner")).toBeNull();
     expect(main.querySelector("h1").textContent).toMatch(/reaches Test Air/);
   });
 
@@ -68,11 +107,14 @@ describe("App", () => {
     window.location.hash = "";
   });
 
-  it("the hosted build's banner says hosted simulation", async () => {
+  it("the hosted build's modal says hosted simulation (still MOCK), and the line keeps the no-real-tenant fact", async () => {
     mockFetch({ ...FLOW, hosted: true });
     render(<App />);
     await screen.findByText(/reaches Test Air/);
-    expect(screen.getByTestId("sim-banner").textContent).toMatch(/Hosted simulation/);
+    expect(screen.getByTestId("mode-modal")).toHaveAttribute("data-mode", "mock");
+    expect(screen.getByTestId("mode-modal").textContent).toMatch(/Hosted simulation\. Every host, token and approval here is a teaching value\. Nothing talks to a real tenant/);
+    expect(MODE_LINES(true).mock).toMatch(/^Hosted simulation\. /);
+    expect(MODE_LINES(false).mock).not.toMatch(/Hosted/);
   });
 
   it("picking a hop on the talk track jumps to it and shows what to say", async () => {
@@ -83,12 +125,13 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say two/));
   });
 
-  it("presenter mode keeps the banner; the arrow keys walk the hops; Reset returns to the list", async () => {
+  it("presenter mode keeps working with the modal closed; the arrow keys walk the hops; Reset returns to the list", async () => {
     const spy = mockFetch();
     render(<App />);
     await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByTestId("mode-modal-ok"));
     fireEvent.click(screen.getByTestId("presenter"));
-    expect(screen.getByTestId("sim-banner")).toBeTruthy();
+    expect(screen.queryByTestId("sim-banner")).toBeNull();
     expect(screen.queryByText("intro text")).toBeNull();
     act(() => { fireEvent.keyDown(window, { key: "ArrowRight" }); });
     await waitFor(() => expect(screen.getByTestId("track-now").textContent).toMatch(/say one/));
@@ -103,6 +146,7 @@ describe("App", () => {
     mockFetch();
     render(<App />);
     await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByTestId("mode-modal-ok")); // the mode modal is a dialog too: close it first
     fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
     expect(screen.getByRole("dialog").textContent).toMatch(/Approval required/);
     expect(screen.getByRole("dialog").textContent).toMatch(/Simulated approval/);
@@ -121,6 +165,7 @@ describe("App", () => {
     mockFetch();
     render(<App />);
     await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByTestId("mode-modal-ok")); // the mode modal is a dialog too: close it first
     fireEvent.click(screen.getByTestId("presenter"));
     const opener = screen.getByRole("button", { name: "Try a held request" });
     opener.focus();
@@ -145,6 +190,7 @@ describe("App", () => {
     mockFetch();
     render(<App />);
     await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByTestId("mode-modal-ok")); // the mode modal is a dialog too: close it first
     fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
     const dialog = screen.getByRole("dialog", { name: "Approval required" });
     expect(dialog).toHaveClass("fd-panel");
@@ -158,6 +204,7 @@ describe("App", () => {
     mockFetch();
     render(<App />);
     await screen.findByText(/reaches Test Air/);
+    fireEvent.click(screen.getByTestId("mode-modal-ok")); // the mode modal is a dialog too: close it first
     fireEvent.click(screen.getByRole("button", { name: "Try a held request" }));
     fireEvent.click(screen.getByRole("button", { name: "Approve" }));
     await screen.findByTestId("approval-result");
