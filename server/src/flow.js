@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { scanHosts } from './safety.js';
 import { DETAILS, HOPS, PAYLOADS, SOURCE } from './flowData.js';
 
-export const DEFAULT_CAST = { brand: 'Northwind Health', program: 'Northwind Health', host: 'northwind' };
+export const DEFAULT_CAST = { brand: 'AirGuard Airlines', program: 'AirGuard Rewards', host: 'airguard' };
 const TOKEN = /\{\{(\w+)\}\}/g;
 const MAX_CAST = 40;
 const MESSAGE = /^\s*\w+--?>>\w+:/;
@@ -35,8 +35,8 @@ export function rawStory() { return { source: SOURCE, payloads: PAYLOADS, detail
 
 export function buildFlow(cast = DEFAULT_CAST) {
   return {
-    title: fill("How an AI assistant reaches {{brand}}'s member benefits", cast),
-    intro: fill("Twelve steps: the assistant discovers {{brand}}'s MCP gateway, finds the sign-in service, is identified by its client metadata, the member signs in and consents (PingOne Protect scores the sign-in risk), the assistant proves itself with a signed assertion, and the gateway asks a policy engine before it calls the benefits API. The assistant never holds the member's credentials.", cast),
+    title: fill("How an AI assistant reaches member benefits at {{brand}}", cast),
+    intro: fill("Twelve steps: the assistant discovers the MCP gateway at {{brand}}, finds the sign-in service, is identified by its client metadata, the member signs in and consents (PingOne Protect scores the sign-in risk), the assistant proves itself with a signed assertion, and the gateway asks a policy engine before it calls the benefits API. The assistant never holds the member's credentials.", cast),
     cast,
     source: fill(SOURCE, cast),
     payloads: PAYLOADS.map((p) => (p === null ? null : fill(p, cast))),

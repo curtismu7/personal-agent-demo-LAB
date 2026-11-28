@@ -6,6 +6,8 @@ Tier: Demo
 
 **Tier: Demo.** How an AI assistant (the member's own agent) reaches a member's benefits through an MCP gateway, in twelve steps: protected tool request, resource metadata, OAuth configuration, browser authorization, client metadata lookup (CIMD), sign-in with a PingOne Protect risk evaluation and consent, signed code exchange, access token, gateway validation, fine-grained policy decision, downstream call and authorized result. The walkthrough is a React Flow sequence diagram with a decoded payload or mock token JSON under each message.
 
+The default story is **AirGuard Airlines**, a fictional airline: a member of its loyalty programme (AirGuard Rewards) asks their own AI assistant for their tier and benefits. The tool name `get_my_benefits` and the scope `benefits:read` are protocol names and stay.
+
 It also has a **held request**: the policy engine answers "approval required" and a modal (simulated) lets the member approve or decline, so the audience cannot miss the human step.
 
 Mock only. Every host ends in `.example`, every token is a labelled teaching value, and the app makes no outbound network request (a netguard blocks them and tests prove it). It needs no tenant and no credentials. The architecture is illustrative, not a claim of any production deployment.
@@ -66,7 +68,7 @@ Port range 6900-6909 (default 6900). `GET /api/health` answers `demo-health/1`.
 - **Held request:** the header button opens the approval modal (Approve or Decline, Esc closes).
 - **Presenter:** the Presenter button (or `P`) hides the intro and enlarges the talk track. `→` next, `←` back, `Esc` leaves. The simulation banner stays.
 - **Reset demo:** stops the walkthrough and refits the diagram.
-- **Branding:** copy `customer.config.example.json` to `customer.config.json` and edit the three cast values. It is git-ignored and read on every request.
+- **Branding:** copy `customer.config.example.json` to `customer.config.json` and edit the three cast values (the default is brand AirGuard Airlines, program AirGuard Rewards, host `airguard`). It is git-ignored and read on every request.
 
 ## Notes
 

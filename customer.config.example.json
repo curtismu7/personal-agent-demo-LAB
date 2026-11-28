@@ -1,4 +1,4 @@
 {
   "_readme": "Copy to customer.config.json (git-ignored) to brand the walkthrough. Only these three cast values are read; everything else is ignored. host is lowercase letters, digits and dashes and becomes mcp.<host>.example.",
-  "cast": { "brand": "Northwind Health", "program": "Northwind Health", "host": "northwind" }
+  "cast": { "brand": "AirGuard Airlines", "program": "AirGuard Rewards", "host": "airguard" }
 }

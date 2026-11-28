@@ -31,15 +31,33 @@ test('the default story names no real company or customer', () => {
   for (const word of ['united', 'mileageplus', 'datapower', 'optum', 'uhg', 'unitedhealth']) assert.ok(!filled.includes(word), word);
 });
 
+// Retired names: the earlier brands of this story and the airline family, plus the insurance wording the old story used.
+const RETIRED = ['northwind', 'meridian air', 'skyline air', 'northwind air', 'meridian journeys', 'contoso air', 'tessera travel', 'fabrikam', 'harbor', 'vellum', ' ppo', 'coverage'];
+
+test('the default story is AirGuard Airlines (airlines), on host airguard, with no retired brand or insurance wording', async () => {
+  assert.deepEqual(DEFAULT_CAST, { brand: 'AirGuard Airlines', program: 'AirGuard Rewards', host: 'airguard' });
+  const { buildPattern, PATHS } = await import('../src/patternData.js');
+  const text = (JSON.stringify(buildFlow()) + JSON.stringify(PATHS.map(({ id }) => buildPattern(id)))).toLowerCase();
+  assert.ok(!text.includes("airlines's"), 'no clumsy possessive of the brand');
+  assert.ok(text.includes('airguard airlines mcp gateway'), 'the brand shows in the diagram source');
+  assert.ok(text.includes('https://mcp.airguard.example/mcp'), 'the host token is airguard');
+  for (const w of RETIRED) assert.ok(!text.includes(w), `retired name or wording in the default story: ${w}`);
+  assert.deepEqual(unfilled(text, DEFAULT_CAST), []);
+});
+
+test('a story that names a token the cast does not define is reported as unfilled', () => {
+  assert.deepEqual(unfilled('Show my {{program}} {{tool}}', DEFAULT_CAST), ['tool']);
+});
+
 test('customer.config.json changes the cast; bad values fall back, extra keys are ignored', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'door-'));
   const file = path.join(dir, 'customer.config.json');
-  fs.writeFileSync(file, JSON.stringify({ cast: { brand: 'Skyline Air', program: 'Skyline Club', host: 'Bad Host!' }, secret: 'x' }));
+  fs.writeFileSync(file, JSON.stringify({ cast: { brand: 'Example Air', program: 'Example Club', host: 'Bad Host!' }, secret: 'x' }));
   const cast = loadCast(file);
-  assert.equal(cast.brand, 'Skyline Air');
-  assert.equal(cast.program, 'Skyline Club');
+  assert.equal(cast.brand, 'Example Air');
+  assert.equal(cast.program, 'Example Club');
   assert.equal(cast.host, DEFAULT_CAST.host);
-  assert.ok(buildFlow(cast).source.includes('Skyline Air MCP gateway'));
+  assert.ok(buildFlow(cast).source.includes('Example Air MCP gateway'));
   assert.deepEqual(loadCast(path.join(dir, 'missing.json')), DEFAULT_CAST);
   fs.writeFileSync(file, 'not json');
   assert.deepEqual(loadCast(file), DEFAULT_CAST);
@@ -76,8 +94,8 @@ test('a customer value that names a URL, host, address or email keeps the defaul
     fs.writeFileSync(file, JSON.stringify({ cast: { brand } }));
     assert.equal(loadCast(file).brand, DEFAULT_CAST.brand, brand);
   }
-  fs.writeFileSync(file, JSON.stringify({ cast: { brand: 'Skyline Air' } }));
-  assert.equal(loadCast(file).brand, 'Skyline Air');
+  fs.writeFileSync(file, JSON.stringify({ cast: { brand: 'Example Air' } }));
+  assert.equal(loadCast(file).brand, 'Example Air');
 });
 
 test('the host is lower-cased, and an invalid one falls back to the default', () => {

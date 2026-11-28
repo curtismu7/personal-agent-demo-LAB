@@ -30,12 +30,12 @@ test('GET /api/flow returns the filled story; customer.config.json is read on ea
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'door-')), 'customer.config.json');
   await withServer(async (url) => {
     let j = await (await fetch(`${url}/api/flow`)).json();
-    assert.match(j.title, /Northwind Health/);
+    assert.match(j.title, /AirGuard Airlines/);
     assert.equal(j.payloads.length, 28);
     assert.equal(j.hops.length, 12);
-    fs.writeFileSync(file, JSON.stringify({ cast: { brand: 'Skyline Air' } }));
+    fs.writeFileSync(file, JSON.stringify({ cast: { brand: 'Example Air' } }));
     j = await (await fetch(`${url}/api/flow`)).json();
-    assert.match(j.title, /Skyline Air/);
+    assert.match(j.title, /Example Air/);
   }, { configFile: file });
 });
 
