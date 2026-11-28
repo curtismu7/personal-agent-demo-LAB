@@ -138,7 +138,7 @@
     {
       "id": "try-hop-2",
       "label": "Step 2: Discover the resource",
-      "description": "The assistant reads the protected-resource metadata: which authorization server to trust and which scope this tool needs. Nobody at Northwind Health is involved.",
+      "description": "The assistant reads the protected-resource metadata: which authorization server to trust and which scope this tool needs. Nobody at AirGuard Airlines is involved.",
       "group": "try-it",
       "action": {
         "type": "route",
@@ -325,7 +325,7 @@
     {
       "id": "S02",
       "title": "Discover the resource",
-      "say": "The assistant reads the protected-resource metadata: which authorization server to trust and which scope this tool needs. Nobody at Northwind Health is involved."
+      "say": "The assistant reads the protected-resource metadata: which authorization server to trust and which scope this tool needs. Nobody at AirGuard Airlines is involved."
     },
     {
       "id": "S03",

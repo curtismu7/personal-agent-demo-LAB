@@ -81,7 +81,7 @@ export const PAYLOADS = [
   'client_id: https://assistant.example/oauth/client.json\nredirect_uri: https://assistant.example/oauth/callback\nscope: benefits:read\nresource: https://mcp.{{host}}.example/mcp\nresponse_type: code; state: <RANDOM_STATE>\ncode_challenge: <S256 of the verifier>; code_challenge_method: S256',
   'GET https://assistant.example/oauth/client.json\nThe identity provider validates the redirect URI and its client acceptance policy',
   json('CIMD client document', { client_id: 'https://assistant.example/oauth/client.json', client_name: 'Example AI assistant', redirect_uris: ['https://assistant.example/oauth/callback'], token_endpoint_auth_method: 'private_key_jwt', jwks_uri: 'https://assistant.example/oauth/jwks.json' }),
-  'CONSENT SCREEN (example)\nClient: Example AI assistant | Member: signed-in {{program}} member\nAllow: /members/{me}/benefits (read)\nDownstream: {{brand}} Benefits API | Purpose: current coverage\n[ Deny ]  [ Allow benefits:read ]  (consent id + version persisted)',
+  'CONSENT SCREEN (example)\nClient: Example AI assistant | Member: signed-in {{program}} member\nAllow: /members/{me}/benefits (read)\nDownstream: {{brand}} Benefits API | Purpose: current tier and benefits\n[ Deny ]  [ Allow benefits:read ]  (consent id + version persisted)',
   json('Consent record stored on Approve (a Deny issues no code)', { consent_id: 'cns_7f3a', version: 3, member: 'mem_1042', client_id: 'https://assistant.example/oauth/client.json', scope: 'benefits:read', resource: 'https://mcp.{{host}}.example/mcp', granted_at: 'iat' }),
   json('Protect request (STUB)', { event: 'sign-in', user: 'mem_1042', client_id: 'https://assistant.example/oauth/client.json', sdk_signals: '<DEVICE_AND_BEHAVIOUR_SIGNALS>', agent_identification: 'requested' }),
   json('Protect result (STUB)', { result: { level: 'LOW' }, agent_detection: { detected: true, agent_type: 'Example AI assistant', status: 'UNVERIFIED' }, onHigh: 'step up the member or refuse the code' }),
@@ -96,8 +96,8 @@ export const PAYLOADS = [
   json('Policy decision', { decision: 'Permit', obligations: [], reason: 'member owns target; consent cns_7f3a active', onDeny: 'the gateway does not call the downstream API' }),
   'GET /members/mem_1042/benefits\n(only after a Permit)',
   'Permitted benefits for the signed-in member only',
-  json('Tool result', { tool: 'get_my_benefits', content: [{ type: 'text', text: 'Plan: Example PPO. Status: active.' }] }),
-  'Example: Your Example PPO coverage is active.',
+  json('Tool result', { tool: 'get_my_benefits', content: [{ type: 'text', text: 'Tier: Example Gold. Status: active.' }] }),
+  'Example: Your Example Gold tier benefits are active.',
 ];
 
 // Reel details per participant.

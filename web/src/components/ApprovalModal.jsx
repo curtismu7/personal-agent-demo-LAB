@@ -55,7 +55,7 @@ export default function ApprovalModal({ brand, onClose }) {
           <>
             <p>The assistant asked for <strong>sensitive benefit details</strong>. The policy engine returned <b>approval required</b>, so the gateway held the call.</p>
             <pre className="apm-wire">{`action: benefits.read.sensitive\nverdict: HOLD (human approval)\n(illustrative: a real receipt is single use and short-lived)`}</pre>
-            <p className="apm-note">Simulated approval. No push is sent to a real phone and nothing leaves this page. In production this happens in {brand}'s own app, never in the assistant chat.</p>
+            <p className="apm-note">Simulated approval. No push is sent to a real phone and nothing leaves this page. In production this happens in the {brand} app, never in the assistant chat.</p>
             {problem && <p role="alert" className="apm-note">{problem}</p>}
             <div className="apm-actions">
               <button type="button" ref={first} onClick={() => decide("approved")}>Approve</button>

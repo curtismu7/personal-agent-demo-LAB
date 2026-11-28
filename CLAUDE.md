@@ -1,6 +1,6 @@
 # personal-agent-demo
 
-Demo-tier standalone app (D21): a React Flow sequence diagram of an AI assistant reaching member benefits through an MCP gateway in twelve steps, with decoded mock token JSON and a simulated held-request approval modal. Mock only.
+Demo-tier standalone app (D21): a React Flow sequence diagram of an AI assistant reaching a member's loyalty-programme benefits at AirGuard Airlines (a fictional airline; the default cast in `server/src/flow.js`) through an MCP gateway in twelve steps, with decoded mock token JSON and a simulated held-request approval modal. Mock only.
 
 - Run: `./scripts/run.sh` (http://localhost:6900). Test: `npm test` (server is `node --test test/*.test.js`, a glob). Preflight: `npm run doctor`.
 - Story data is `server/src/flowData.js` with `{{brand}}`, `{{program}}`, `{{host}}` tokens; `flow.js` fills them from `customer.config.json`. A test fails on an unfilled token, a non-`.example` host or a name from the forbidden list.

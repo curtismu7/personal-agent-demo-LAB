@@ -38,7 +38,7 @@ test('no shipped text names a real customer, company or tenant', () => {
       if (fs.statSync(p).isDirectory()) walk(p);
       else if (!['repo.test.mjs', 'flow.test.js', 'content-pack.test.mjs'].some((n) => p.endsWith(n))) {
         const t = fs.readFileSync(p, 'utf8').toLowerCase();
-        for (const w of ['united airlines', 'mileageplus', 'datapower', 'optum', 'unitedhealth', 'uhg']) if (t.includes(w)) hits.push(`${path.relative(root, p)}: ${w}`);
+        for (const w of ['united airlines', 'mileageplus', 'datapower', 'optum', 'unitedhealth', 'uhg', 'northwind', 'meridian air', 'skyline air', 'meridian journeys', 'contoso air', 'tessera travel']) if (t.includes(w)) hits.push(`${path.relative(root, p)}: ${w}`);
       }
     }
   };
